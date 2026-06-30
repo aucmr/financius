@@ -1,0 +1,25 @@
+services:
+  db:
+    container_name: fin-db
+    image: postgres:18
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: financius
+
+  app:
+    container_name: fin-app
+    image: node:24
+    ports:
+      - 3030:3000
+    volumes:
+      - .:/opt/app
+    stdin_open: true
+    tty: true
+
+volumes:
+  db_data:

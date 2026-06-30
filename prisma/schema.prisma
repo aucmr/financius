@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CategoryKind {
+  AREA
+  PROFILE
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses Expense[]
+  income   Income[]
+}
+
+model Category {
+  id        String          @id @default(cuid())
+  name      String
+  kind      CategoryKind
+  type      TransactionType
+  color     String
+  icon      String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  expensesAsArea    Expense[] @relation("ExpenseAreaCategory")
+  expensesAsProfile Expense[] @relation("ExpenseProfileCategory")
+  budgets           Budget[]
+
+  @@unique([name, kind])
+}
+
+model Expense {
+  id                String   @id @default(cuid())
+  description       String
+  amount            Decimal  @db.Decimal(10, 2)
+  date              DateTime
+  areaCategoryId    String
+  profileCategoryId String
+  userId            String
+  notes             String?
+  recurring         Boolean  @default(false)
+  shared            Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  areaCategory    Category @relation("ExpenseAreaCategory", fields: [areaCategoryId], references: [id], onDelete: Restrict)
+  profileCategory Category @relation("ExpenseProfileCategory", fields: [profileCategoryId], references: [id], onDelete: Restrict)
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model Income {
+  id          String   @id @default(cuid())
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  userId      String
+  notes       String?
+  recurring   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  categoryId String
+  amount     Decimal  @db.Decimal(10, 2)
+  month      Int
+  year       Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([categoryId, month, year])
+}
