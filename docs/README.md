@@ -10,3 +10,7 @@ This folder contains project documentation that was moved out of the repository 
 - [`PHASE_1_COMPLETE.md`](./PHASE_1_COMPLETE.md) - Phase 1 verification and readiness summary.
 - [`REFERENCE.md`](./REFERENCE.md) - General technical reference for the codebase.
 - [`README_CHANGES.md`](./README_CHANGES.md) - Executive summary of the major updates.
+
+## Feature Documentation
+
+- [`CSV-IMPORT.md`](./CSV-IMPORT.md) - Bulk import expenses from credit card statements (XP/BTG CSV files).

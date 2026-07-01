@@ -27,6 +27,9 @@ export default async function DashboardLayout({
             <a href="/income" className="text-gray-600 hover:text-gray-900">
               Income
             </a>
+            <a href="/import" className="text-gray-600 hover:text-gray-900">
+              Import CSV
+            </a>
           </nav>
           <span className="text-sm text-gray-600">
             Hello, <strong>{session.user?.name}</strong>
