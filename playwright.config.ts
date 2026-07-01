@@ -8,7 +8,9 @@ const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 const NEXTAUTH_URL = process.env.NEXTAUTH_URL ?? APP_URL;
 
 if (!DATABASE_URL) {
-  throw new Error("Missing required env var: TEST_DATABASE_URL or DATABASE_URL");
+  throw new Error(
+    "Missing required env var: TEST_DATABASE_URL or DATABASE_URL",
+  );
 }
 
 if (!NEXTAUTH_SECRET) {

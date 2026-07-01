@@ -108,12 +108,20 @@ test.describe("Authentication flow", () => {
     await page.getByLabel("Responsible").selectOption({ label: WIFE.name });
     await page.getByRole("button", { name: /add expense/i }).click();
 
-    const expenseRow = page.getByRole("row").filter({ hasText: uniqueDescription });
-    await expect(expenseRow.getByRole("cell", { name: uniqueDescription })).toBeVisible();
-    await expect(expenseRow.getByRole("cell", { name: WIFE.name })).toBeVisible();
+    const expenseRow = page
+      .getByRole("row")
+      .filter({ hasText: uniqueDescription });
+    await expect(
+      expenseRow.getByRole("cell", { name: uniqueDescription }),
+    ).toBeVisible();
+    await expect(
+      expenseRow.getByRole("cell", { name: WIFE.name }),
+    ).toBeVisible();
   });
 
-  test("logged-in user can add an income from income page", async ({ page }) => {
+  test("logged-in user can add an income from income page", async ({
+    page,
+  }) => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(HUSBAND.email);
     await page.getByLabel("Password").fill(HUSBAND.password);
@@ -129,8 +137,14 @@ test.describe("Authentication flow", () => {
     await page.getByLabel("Owner").selectOption({ label: WIFE.name });
     await page.getByRole("button", { name: /add income/i }).click();
 
-    const incomeRow = page.getByRole("row").filter({ hasText: uniqueDescription });
-    await expect(incomeRow.getByRole("cell", { name: uniqueDescription })).toBeVisible();
-    await expect(incomeRow.getByRole("cell", { name: WIFE.name })).toBeVisible();
+    const incomeRow = page
+      .getByRole("row")
+      .filter({ hasText: uniqueDescription });
+    await expect(
+      incomeRow.getByRole("cell", { name: uniqueDescription }),
+    ).toBeVisible();
+    await expect(
+      incomeRow.getByRole("cell", { name: WIFE.name }),
+    ).toBeVisible();
   });
 });

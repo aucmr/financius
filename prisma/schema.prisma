@@ -28,7 +28,7 @@ model User {
   expenses            Expense[]
   responsibleExpenses Expense[] @relation("ExpenseResponsibleUser")
   income              Income[]
-  ownedIncome         Income[] @relation("IncomeOwnerUser")
+  ownedIncome         Income[]  @relation("IncomeOwnerUser")
 }
 
 model Category {
@@ -56,7 +56,7 @@ model Expense {
   areaCategoryId    String
   profileCategoryId String
   userId            String
-  responsibleUserId  String
+  responsibleUserId String
   notes             String?
   recurring         Boolean  @default(false)
   shared            Boolean  @default(false)
@@ -81,7 +81,7 @@ model Income {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user      User @relation(fields: [userId], references: [id])
   ownerUser User @relation("IncomeOwnerUser", fields: [ownerUserId], references: [id])
 }
 
