@@ -1,0 +1,119 @@
+generator client {
+    provider = "prisma-client"
+    output   = "./generated"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum CategoryKind {
+    AREA
+    PROFILE
+}
+
+enum TransactionType {
+    EXPENSE
+    INCOME
+}
+
+model User {
+    id           String   @id @default(cuid())
+    email        String   @unique
+    name         String
+    passwordHash String
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    expenses            Expense[]
+    responsibleExpenses Expense[] @relation("ExpenseResponsibleUser")
+    income              Income[]
+    ownedIncome         Income[]  @relation("IncomeOwnerUser")
+}
+
+model Category {
+    id        String          @id @default(cuid())
+    name      String
+    kind      CategoryKind
+    type      TransactionType
+    color     String
+    icon      String?
+    createdAt DateTime        @default(now())
+    updatedAt DateTime        @updatedAt
+
+    expensesAsArea    Expense[]         @relation("ExpenseAreaCategory")
+    expensesAsProfile Expense[]         @relation("ExpenseProfileCategory")
+    areaSubcategories AreaSubcategory[]
+    budgets           Budget[]
+
+    @@unique([name, kind])
+}
+
+model Expense {
+    id                String   @id @default(cuid())
+    description       String
+    amount            Decimal  @db.Decimal(10, 2)
+    transactionDate   DateTime
+    date              DateTime
+    areaCategoryId    String
+    areaSubcategoryId String?
+    profileCategoryId String
+    userId            String
+    responsibleUserId String
+    notes             String?
+    recurring         Boolean  @default(false)
+    shared            Boolean  @default(false)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+
+    areaCategory    Category         @relation("ExpenseAreaCategory", fields: [areaCategoryId], references: [id], onDelete: Restrict)
+    areaSubcategory AreaSubcategory? @relation(fields: [areaSubcategoryId], references: [id], onDelete: Restrict)
+    profileCategory Category         @relation("ExpenseProfileCategory", fields: [profileCategoryId], references: [id], onDelete: Restrict)
+    user            User             @relation(fields: [userId], references: [id])
+    responsibleUser User             @relation("ExpenseResponsibleUser", fields: [responsibleUserId], references: [id])
+
+    @@index([transactionDate, amount])
+}
+
+model AreaSubcategory {
+    id             String   @id @default(cuid())
+    name           String
+    areaCategoryId String
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    areaCategory Category  @relation(fields: [areaCategoryId], references: [id], onDelete: Restrict)
+    expenses     Expense[]
+
+    @@unique([areaCategoryId, name])
+}
+
+model Income {
+    id          String   @id @default(cuid())
+    description String
+    amount      Decimal  @db.Decimal(10, 2)
+    date        DateTime
+    userId      String
+    ownerUserId String
+    notes       String?
+    recurring   Boolean  @default(false)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    user      User @relation(fields: [userId], references: [id])
+    ownerUser User @relation("IncomeOwnerUser", fields: [ownerUserId], references: [id])
+}
+
+model Budget {
+    id         String   @id @default(cuid())
+    categoryId String
+    amount     Decimal  @db.Decimal(10, 2)
+    month      Int
+    year       Int
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+    @@unique([categoryId, month, year])
+}
