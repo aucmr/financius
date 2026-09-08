@@ -2,11 +2,13 @@ import { authUserRepository } from "@/src/app/(auth)/_lib/repository";
 import { parseSignInInput } from "@/src/app/(auth)/_lib/schemas";
 import { authenticateUser } from "@/src/app/(auth)/_lib/services";
 import { passwordService } from "@/src/lib/auth/password";
+import { serverEnv } from "@/src/lib/env/server";
 import type { NextAuthConfig } from "next-auth";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 const authConfig: NextAuthConfig = {
+  secret: serverEnv.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
