@@ -70,11 +70,11 @@ export function AppShell({ children, user }: AppShellProps) {
     }
 
     return (
-        <div className="min-h-screen bg-base-200 lg:flex">
+        <div className="h-screen overflow-hidden bg-base-200 sm:flex">
             <button
                 type="button"
                 className={cn(
-                    "fixed inset-0 z-40 bg-neutral/40 transition-opacity duration-300 lg:hidden",
+                    "fixed inset-0 z-40 bg-neutral/40 transition-opacity duration-300 sm:hidden",
                     mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
                 )}
                 onClick={closeMobileMenu}
@@ -90,13 +90,13 @@ export function AppShell({ children, user }: AppShellProps) {
                 onNavigate={closeMobileMenu}
             />
 
-            <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+            <div className="flex h-screen min-h-0 min-w-0 flex-1 flex-col">
                 <header className="navbar sticky top-0 z-30 min-h-16 bg-base-100 px-4 shadow-sm sm:px-6 lg:px-8">
                     <div className="navbar-start w-auto flex-1 gap-3">
                         <button
                             ref={mobileMenuButtonRef}
                             type="button"
-                            className="btn btn-soft btn-square btn-sm lg:hidden"
+                            className="btn btn-text btn-square btn-sm sm:hidden"
                             onClick={() => setMobileOpen(true)}
                             aria-label="Abrir menu"
                             aria-controls="financius-sidebar"
@@ -104,7 +104,7 @@ export function AppShell({ children, user }: AppShellProps) {
                         >
                             <span className="icon-[tabler--menu-2] size-5" aria-hidden="true" />
                         </button>
-                        <div className="hidden min-w-0 md:block">
+                        <div className="hidden min-w-0 sm:block">
                             <p className="text-xs font-medium uppercase tracking-[0.14em] text-base-content/50">
                                 Financius
                             </p>
@@ -123,7 +123,7 @@ export function AppShell({ children, user }: AppShellProps) {
                         </label>
                     </div>
                     <div className="navbar-center">
-                        <div className="lg:hidden">
+                        <div className="sm:hidden">
                             <FinanciusLogo />
                         </div>
                     </div>
@@ -144,7 +144,7 @@ export function AppShell({ children, user }: AppShellProps) {
                     </div>
                 </header>
 
-                <main id="main-content" className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <main id="main-content" className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                     {children}
                 </main>
             </div>

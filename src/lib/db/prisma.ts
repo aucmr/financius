@@ -9,7 +9,7 @@ const globalForPrisma = globalThis as GlobalWithPrisma;
 
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
-  const schema = process.env.DATABASE_SCHEMA ?? "base";
+  const schema = process.env.DATABASE_SCHEMA ?? "public";
 
   if (!connectionString) {
     throw new Error(

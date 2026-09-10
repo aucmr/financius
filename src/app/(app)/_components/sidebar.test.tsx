@@ -54,7 +54,7 @@ describe("SidebarNav", () => {
         const dashboardLink = screen.getByRole("link", { name: /dashboard/i });
 
         expect(dashboardLink).toHaveAttribute("title", "Dashboard");
-        expect(screen.getByText("Dashboard")).toHaveClass("lg:hidden");
+        expect(screen.getByText("Dashboard")).toHaveClass("sm:hidden");
     });
 });
 
@@ -75,5 +75,45 @@ describe("Sidebar", () => {
         fireEvent.click(screen.getByRole("button", { name: "Recolher barra lateral" }));
 
         expect(onToggleCollapsed).toHaveBeenCalledOnce();
+    });
+
+    it("places the separated logout link immediately before user information", () => {
+        render(
+            <Sidebar
+                collapsed
+                mobileOpen={false}
+                user={{ name: "Ana", email: "ana@example.com" }}
+                onToggleCollapsed={vi.fn()}
+                onNavigate={vi.fn()}
+            />,
+        );
+
+        const userEmail = screen.getByText("ana@example.com");
+        const signOutLink = screen.getByRole("link", { name: "Sair" });
+        const divider = signOutLink.closest(".border-t");
+
+        expect(signOutLink.compareDocumentPosition(userEmail)).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        );
+        expect(signOutLink).toHaveClass("w-full", "px-3");
+        expect(signOutLink).not.toHaveClass("sm:justify-center", "sm:px-0");
+        expect(divider).toHaveClass("border-t", "pt-4");
+    });
+
+    it("keeps the sidebar independently scrollable", () => {
+        render(
+            <Sidebar
+                collapsed={false}
+                mobileOpen={false}
+                user={{ name: "Ana", email: "ana@example.com" }}
+                onToggleCollapsed={vi.fn()}
+                onNavigate={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByRole("complementary", { name: "Barra lateral" })).toHaveClass(
+            "overflow-y-auto",
+            "sm:h-screen",
+        );
     });
 });

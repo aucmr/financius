@@ -33,22 +33,22 @@ export function Sidebar({
         <aside
             id="financius-sidebar"
             className={cn(
-                "drawer drawer-start fixed inset-y-0 start-0 z-50 flex w-72 max-w-[calc(100vw-2rem)] flex-col bg-base-100 shadow-lg transition-transform duration-300 lg:static lg:z-auto lg:h-screen lg:max-w-none lg:translate-x-0 lg:shadow-none",
-                collapsed ? "lg:w-20" : "lg:w-72",
+                "drawer drawer-start fixed inset-y-0 inset-s-0 z-50 flex w-72 max-w-[calc(100vw-2rem)] flex-col overflow-y-auto border-e border-base-content/20 bg-base-100 shadow-lg transition-transform duration-300 sm:static sm:z-auto sm:h-screen sm:max-w-none sm:translate-x-0 sm:shadow-none",
+                collapsed ? "sm:w-20" : "sm:w-72",
                 mobileOpen ? "translate-x-0" : "-translate-x-full",
             )}
             aria-label="Barra lateral"
         >
             <div
                 className={cn(
-                    "drawer-header min-h-20 px-5 py-4",
-                    collapsed && "lg:justify-center lg:px-3",
+                    "drawer-header flex w-full items-center justify-between gap-3 px-5 py-4",
+                    collapsed && "sm:gap-1 sm:justify-center sm:px-0",
                 )}
             >
                 <FinanciusLogo collapsed={collapsed} />
                 <button
                     type="button"
-                    className="btn btn-ghost btn-square btn-sm hidden lg:inline-flex"
+                    className="btn btn-circle btn-text btn-sm hidden sm:inline-flex"
                     onClick={onToggleCollapsed}
                     aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
                     aria-expanded={!collapsed}
@@ -67,18 +67,25 @@ export function Sidebar({
                 </button>
             </div>
 
-            <div className="drawer-body px-3 py-4">
+            <div className="drawer-body px-2 pt-4">
                 <SidebarNav collapsed={collapsed} onNavigate={onNavigate} />
             </div>
 
-            <div className={cn("drawer-footer block p-4", collapsed && "lg:px-3")}>
-                <div className={cn("flex items-center gap-3", collapsed && "lg:justify-center")}>
+            <div className={cn("drawer-footer flex flex-col gap-4 p-4", collapsed && "sm:px-3")}>
+                <div className="border-t border-base-content/15 pt-4">
+                    <ul className="menu menu-sm w-full gap-1 p-0">
+                        <li>
+                            <SignOutButton collapsed={collapsed} />
+                        </li>
+                    </ul>
+                </div>
+                <div className={cn("flex items-center gap-3", collapsed && "sm:justify-center")}>
                     <div className="avatar avatar-placeholder shrink-0">
                         <div className="size-10 rounded-full bg-base-200 text-base-content">
                             <span className="text-sm font-semibold">{getUserInitial(user)}</span>
                         </div>
                     </div>
-                    <div className={cn("min-w-0 flex-1", collapsed && "lg:hidden")}>
+                    <div className={cn("min-w-0 flex-1", collapsed && "sm:hidden")}>
                         <p className="truncate text-sm font-semibold text-base-content">
                             {user.name || "Usuário"}
                         </p>
@@ -87,7 +94,6 @@ export function Sidebar({
                         </p>
                     </div>
                 </div>
-                <SignOutButton collapsed={collapsed} />
             </div>
         </aside>
     );

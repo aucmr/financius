@@ -36,7 +36,7 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
 
     return (
         <nav aria-label="Navegação principal">
-            <p className={cn("mb-2 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-base-content/40", collapsed && "lg:sr-only")}>
+            <p className={cn("mb-2 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-base-content/40", collapsed && "sm:sr-only")}>
                 Principal
             </p>
             <ul className="menu menu-sm w-full gap-1 p-0">
@@ -50,14 +50,14 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                                 className={cn(
                                     "min-h-10 w-full rounded-field px-3 text-sm",
                                     isActive && "menu-active",
-                                    collapsed && "lg:justify-center lg:px-0",
+                                    collapsed && "sm:justify-center sm:px-0",
                                 )}
                                 aria-current={isActive ? "page" : undefined}
                                 title={collapsed ? item.label : undefined}
                                 onClick={onNavigate}
                             >
                                 <span className={cn(item.icon, "size-5 shrink-0")} aria-hidden="true" />
-                                <span className={cn("min-w-0 truncate", collapsed && "lg:hidden")}>
+                                <span className={cn("min-w-0 truncate", collapsed && "sm:hidden")}>
                                     {item.label}
                                 </span>
                                 <span className="sr-only">{item.description}</span>

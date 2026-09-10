@@ -95,7 +95,7 @@ export function SignUpForm() {
                             <span className="label text-error text-xs">{errors.password.message}</span>
                         ) : null}
                     </label>
-                    <button type="submit" className="btn mt-2" disabled={isSubmitting}>
+                    <button type="submit" className="btn btn-primary mt-2" disabled={isSubmitting}>
                         {isSubmitting ? "Creating account..." : "Create account"}
                     </button>
                 </form>

@@ -12,7 +12,7 @@ export function FinanciusLogo({ collapsed = false }: FinanciusLogoProps) {
             href="/dashboard"
             className={cn(
                 "flex min-w-0 items-center gap-3 text-base-content",
-                collapsed && "lg:justify-center",
+                collapsed && "sm:justify-center",
             )}
             aria-label="Financius - Dashboard"
         >
@@ -24,7 +24,7 @@ export function FinanciusLogo({ collapsed = false }: FinanciusLogoProps) {
             <span
                 className={cn(
                     "truncate text-base font-semibold tracking-tight",
-                    collapsed && "lg:hidden",
+                    collapsed && "sm:hidden",
                 )}
             >
                 Financius

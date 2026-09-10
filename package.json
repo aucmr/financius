@@ -8,11 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:unit": "vitest run features/auth/schemas/auth.test.ts features/auth/services/auth-service.test.ts",
-    "test:integration": "vitest run features/auth/integration/login.integration.test.ts",
+    "test:unit": "vitest run 'src/app/(auth)/_lib/schemas.test.ts' 'src/app/(auth)/_lib/services.test.ts' 'src/app/(app)/despesas/_lib/schemas.test.ts' 'src/app/(app)/despesas/_lib/services.test.ts'",
+    "test:integration": "vitest run 'src/app/(auth)/_lib/login.integration.test.ts'",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -44,6 +47,7 @@
     "eslint-config-next": "16.2.11",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^4.1.10"
   }

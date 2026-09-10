@@ -17,19 +17,19 @@ export default function PublicHomePage() {
             <div className="flex flex-wrap items-center gap-3">
                 <Link
                     href="/sign-in"
-                    className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700"
+                    className="btn btn-primary"
                 >
                     Sign In
                 </Link>
                 <Link
                     href="/sign-up"
-                    className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-zinc-100"
+                    className="btn btn-soft btn-secondary"
                 >
                     Create Account
                 </Link>
                 <Link
                     href="/dashboard"
-                    className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-zinc-100"
+                    className="btn btn-soft btn-secondary"
                 >
                     Open Dashboard
                 </Link>

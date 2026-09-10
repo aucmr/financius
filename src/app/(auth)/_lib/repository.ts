@@ -23,6 +23,21 @@ export const authUserRepository: AuthUserRepository = {
     return prisma.user.findUnique({ where: { email } });
   },
   async create(input) {
-    return prisma.user.create({ data: input });
+    return prisma.$transaction(async (transaction) => {
+      const user = await transaction.user.create({ data: input });
+
+      await transaction.household.create({
+        data: {
+          name: `${user.name}'s household`,
+          members: {
+            create: {
+              userId: user.id,
+            },
+          },
+        },
+      });
+
+      return user;
+    });
   },
 };

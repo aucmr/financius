@@ -25,10 +25,33 @@ model User {
     createdAt    DateTime @default(now())
     updatedAt    DateTime @updatedAt
 
+    householdMembership HouseholdMember?
     expenses            Expense[]
-    responsibleExpenses Expense[] @relation("ExpenseResponsibleUser")
+    responsibleExpenses Expense[]        @relation("ExpenseResponsibleUser")
     income              Income[]
-    ownedIncome         Income[]  @relation("IncomeOwnerUser")
+    ownedIncome         Income[]         @relation("IncomeOwnerUser")
+}
+
+model Household {
+    id        String   @id @default(cuid())
+    name      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    members  HouseholdMember[]
+    expenses Expense[]
+}
+
+model HouseholdMember {
+    id          String   @id @default(cuid())
+    householdId String
+    userId      String   @unique
+    createdAt   DateTime @default(now())
+
+    household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([householdId, userId])
 }
 
 model Category {
@@ -50,29 +73,32 @@ model Category {
 }
 
 model Expense {
-    id                String   @id @default(cuid())
-    description       String
-    amount            Decimal  @db.Decimal(10, 2)
-    transactionDate   DateTime
-    date              DateTime
-    areaCategoryId    String
-    areaSubcategoryId String?
-    profileCategoryId String
-    userId            String
-    responsibleUserId String
-    notes             String?
-    recurring         Boolean  @default(false)
-    shared            Boolean  @default(false)
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
+    id                        String    @id @default(cuid())
+    description               String
+    amount                    Decimal   @db.Decimal(10, 2)
+    creditCardTransactionDate DateTime? @db.Date
+    date                      DateTime  @db.Date
+    householdId               String
+    areaCategoryId            String
+    areaSubcategoryId         String
+    profileCategoryId         String
+    userId                    String
+    responsibleUserId         String
+    notes                     String?
+    recurring                 Boolean   @default(false)
+    shared                    Boolean   @default(false)
+    createdAt                 DateTime  @default(now())
+    updatedAt                 DateTime  @updatedAt
 
-    areaCategory    Category         @relation("ExpenseAreaCategory", fields: [areaCategoryId], references: [id], onDelete: Restrict)
-    areaSubcategory AreaSubcategory? @relation(fields: [areaSubcategoryId], references: [id], onDelete: Restrict)
-    profileCategory Category         @relation("ExpenseProfileCategory", fields: [profileCategoryId], references: [id], onDelete: Restrict)
-    user            User             @relation(fields: [userId], references: [id])
-    responsibleUser User             @relation("ExpenseResponsibleUser", fields: [responsibleUserId], references: [id])
+    household       Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+    areaCategory    Category        @relation("ExpenseAreaCategory", fields: [areaCategoryId], references: [id], onDelete: Restrict)
+    areaSubcategory AreaSubcategory @relation(fields: [areaSubcategoryId], references: [id], onDelete: Restrict)
+    profileCategory Category        @relation("ExpenseProfileCategory", fields: [profileCategoryId], references: [id], onDelete: Restrict)
+    user            User            @relation(fields: [userId], references: [id])
+    responsibleUser User            @relation("ExpenseResponsibleUser", fields: [responsibleUserId], references: [id])
 
-    @@index([transactionDate, amount])
+    @@index([householdId, date])
+    @@index([date, amount])
 }
 
 model AreaSubcategory {

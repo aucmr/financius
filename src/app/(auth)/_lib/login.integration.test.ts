@@ -1,15 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { authUserRepository } from "@/src/app/(auth)/_lib/repository";
 import { authenticateUser, registerUser } from "@/src/app/(auth)/_lib/services";
 import { passwordService } from "@/src/lib/auth/password";
-import { prisma } from "@/src/lib/db/prisma";
 
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 const describeIfDatabase = hasDatabase ? describe : describe.skip;
 
 describeIfDatabase("login integration with postgres", () => {
+  let authUserRepository: typeof import("@/src/app/(auth)/_lib/repository").authUserRepository;
+  let prisma: typeof import("@/src/lib/db/prisma").prisma;
+
   beforeAll(async () => {
+    ({ authUserRepository } = await import("@/src/app/(auth)/_lib/repository"));
+    ({ prisma } = await import("@/src/lib/db/prisma"));
     await prisma.user.deleteMany({});
   });
 
