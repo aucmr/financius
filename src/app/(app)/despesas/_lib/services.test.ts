@@ -71,6 +71,19 @@ describe("expense service", () => {
     });
   });
 
+  it.each(["67,60", "298,21"])(
+    "accepts a positive manual expense of %s",
+    async (amount) => {
+      const repository = createRepository();
+
+      await createExpense(context, { ...values, amount }, repository);
+
+      expect(repository.createExpense).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: amount.replace(",", ".") }),
+      );
+    },
+  );
+
   it("rejects a responsible user outside the household", async () => {
     const repository = createRepository();
     repository.findExpenseReferences.mockResolvedValue({
@@ -100,6 +113,23 @@ describe("expense service", () => {
     expect(repository.deleteExpense).toHaveBeenCalledWith(
       "household-id",
       "expense-id",
+    );
+  });
+
+  it("normalizes a negative amount when editing an expense", async () => {
+    const repository = createRepository();
+
+    await updateExpense(
+      context,
+      "expense-id",
+      { ...values, amount: "-12,50" },
+      repository,
+    );
+
+    expect(repository.updateExpense).toHaveBeenCalledWith(
+      "household-id",
+      "expense-id",
+      expect.objectContaining({ amount: "-12.50" }),
     );
   });
 

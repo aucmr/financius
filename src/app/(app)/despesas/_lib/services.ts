@@ -61,22 +61,36 @@ const defaultRepository: ExpenseRepository = {
   findExpenses,
 };
 
-function normalizeAmount(value: string) {
+function normalizeAmount(value: string, allowNegative = false) {
   const normalized = value.replace(",", ".");
-  const [whole, fraction = ""] = normalized.split(".");
-  const cents = Number(`${whole}.${fraction.padEnd(2, "0")}`) * 100;
+  const isNegative = normalized.startsWith("-");
+  const unsignedValue = isNegative ? normalized.slice(1) : normalized;
+  const [whole, fraction = ""] = unsignedValue.split(".");
+  const cents =
+    (Number(whole) * 100 + Number(fraction.padEnd(2, "0"))) *
+    (isNegative ? -1 : 1);
 
-  if (!Number.isSafeInteger(cents) || cents <= 0) {
-    throw new ExpenseValidationError("O valor deve ser maior que zero.");
+  if (
+    !Number.isSafeInteger(cents) ||
+    (allowNegative ? cents === 0 : cents <= 0)
+  ) {
+    throw new ExpenseValidationError(
+      allowNegative
+        ? "O valor nao pode ser zero."
+        : "O valor deve ser maior que zero.",
+    );
   }
 
-  return `${whole}.${fraction.padEnd(2, "0")}`;
+  return `${isNegative ? "-" : ""}${whole}.${fraction.padEnd(2, "0")}`;
 }
 
-function toPersistedValues(values: ExpenseFormValues): PersistedExpenseValues {
+function toPersistedValues(
+  values: ExpenseFormValues,
+  allowNegative = false,
+): PersistedExpenseValues {
   return {
     description: values.description.trim(),
-    amount: normalizeAmount(values.amount),
+    amount: normalizeAmount(values.amount, allowNegative),
     date: parseDateOnly(values.date),
     areaCategoryId: values.areaCategoryId,
     areaSubcategoryId: values.areaSubcategoryId,
@@ -144,7 +158,7 @@ export async function updateExpense(
   values: ExpenseFormValues,
   repository: ExpenseRepository = defaultRepository,
 ) {
-  const persistedValues = toPersistedValues(values);
+  const persistedValues = toPersistedValues(values, true);
   await assertReferences(context, persistedValues, repository);
 
   const updated = await repository.updateExpense(
@@ -178,6 +192,11 @@ export function mapExpense(record: ExpenseRecord) {
     description: record.description,
     amount: record.amount.toString(),
     date: formatDateOnly(record.date),
+    creditCardTransactionDate: record.creditCardTransactionDate
+      ? formatDateOnly(record.creditCardTransactionDate)
+      : null,
+    importSource: record.importBatch?.source ?? null,
+    importFileName: record.importBatch?.fileName ?? null,
     notes: record.notes,
     recurring: record.recurring,
     shared: record.shared,

@@ -33,6 +33,9 @@ export type ExpenseListItem = {
   description: string;
   amount: string;
   date: string;
+  creditCardTransactionDate?: string | null;
+  importSource?: string | null;
+  importFileName?: string | null;
   notes: string | null;
   recurring: boolean;
   shared: boolean;

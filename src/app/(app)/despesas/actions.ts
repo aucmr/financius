@@ -82,7 +82,7 @@ export async function updateExpenseAction(
   values: unknown,
 ): Promise<ExpenseActionResult> {
   const parsedId = parseExpenseId(id);
-  const parsed = parseExpenseFormInput(values);
+  const parsed = parseExpenseFormInput(values, { allowNegative: true });
 
   if (!parsedId.success) {
     return {

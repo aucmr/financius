@@ -10,6 +10,7 @@ const expenseSelect = {
   id: true,
   description: true,
   amount: true,
+  creditCardTransactionDate: true,
   date: true,
   notes: true,
   recurring: true,
@@ -44,6 +45,12 @@ const expenseSelect = {
     select: {
       id: true,
       name: true,
+    },
+  },
+  importBatch: {
+    select: {
+      source: true,
+      fileName: true,
     },
   },
 } as const;

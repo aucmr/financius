@@ -37,3 +37,20 @@ Lista de requisitos do sistema Financius
 - `shared` marca a despesa como participante do resumo mensal compartilhado. A fórmula editável e o rateio detalhado ainda não fazem parte desta entrega.
 - `recurring` é apenas uma marcação visual nesta primeira versão e não gera lançamentos futuros.
 - O catálogo de categorias e subcategorias é carregado pelo seed do Prisma; não há CRUD de categorias nesta etapa.
+
+## Importação de faturas e extratos
+
+- A aplicação aceita arquivos CSV dos formatos XP, BTG e Banco do Brasil (BB). O delimitador de vírgula ou ponto e vírgula é detectado automaticamente; arquivos UTF-8, UTF-16 com BOM e Windows-1252 são aceitos.
+- XP e BTG representam faturas de cartão. A competência da fatura é informada manualmente no início do fluxo e é persistida em `Expense.date`; a data original da compra é persistida em `creditCardTransactionDate`.
+- BB representa extrato bancário. A data de cada lançamento é usada em `Expense.date`, sem `creditCardTransactionDate`.
+- Na v1 são importados somente lançamentos de saída do BB. Créditos, pagamentos de fatura e linhas de saldo são ignorados conforme o tipo identificado no arquivo.
+- Valores de cartão preservam o sinal original, incluindo estornos negativos. Débitos do BB são normalizados para valores positivos. A criação manual continua exigindo valor positivo; a edição permite manter um estorno negativo importado.
+- Valores importados são convertidos para centavos sem aritmética decimal de ponto flutuante; valores não nulos não podem ser rejeitados por erro de precisão, enquanto zero continua inválido.
+- Cada arquivo tem um responsável único, escolhido no setup e aplicado a todas as linhas. O servidor valida que o responsável pertence ao household autenticado.
+- A leitura do arquivo não grava dados. Depois do parsing, cada linha válida passa por uma revisão obrigatória antes de ser confirmada ou pulada.
+- Durante a revisão, é possível voltar à despesa anterior. Os campos e a decisão são preservados; confirmar ou pular novamente substitui a decisão anterior da linha sem duplicá-la no lote.
+- O histórico do household pode gerar sugestões por descrição exata ou similaridade. A sugestão serve apenas como pré-preenchimento; categoria de área, subcategoria, categoria de perfil, responsável, observações e marcações podem ser revisados antes da confirmação.
+- Duplicidades são exibidas como aviso por linha, usando fingerprint da linha e combinação de descrição, valor e datas. A pessoa pode confirmar a importação da linha duplicada ou pulá-la; uma duplicidade não bloqueia as demais linhas do arquivo.
+- O sistema registra um lote de importação com arquivo, origem, fingerprint do arquivo, competência, status e contadores de linhas importadas, ignoradas, puladas e com falha. Cada despesa importada mantém o lote, número da linha, fingerprint e metadados técnicos de origem.
+- A listagem mensal identifica despesas importadas e, para lançamentos de cartão, mostra a data original da compra separada da competência mensal.
+- Limitações da v1: somente os três layouts CSV suportados são reconhecidos; a competência de XP/BTG depende da informação manual; a revisão é individual por linha; não há importação de receitas nem sincronização automática com instituições financeiras.

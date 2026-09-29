@@ -11,6 +11,7 @@ import {
     updateExpenseAction,
 } from "@/src/app/(app)/despesas/actions";
 import {
+    expenseEditFormSchema,
     expenseFormSchema,
     type ExpenseFormValues,
 } from "@/src/app/(app)/despesas/_lib/schemas";
@@ -35,7 +36,7 @@ export function ExpenseForm({ expenseId, options, initialValues, householdName }
         reset,
         formState: { errors, isSubmitting },
     } = useForm<ExpenseFormValues>({
-        resolver: zodResolver(expenseFormSchema),
+        resolver: zodResolver(expenseId ? expenseEditFormSchema : expenseFormSchema),
         defaultValues: initialValues,
     });
     const areaCategoryId = useWatch({ control, name: "areaCategoryId" });
@@ -109,6 +110,7 @@ export function ExpenseForm({ expenseId, options, initialValues, householdName }
                                     />
                                 </label>
                                 {errors.amount?.message && <span className="label-text-alt mt-1 text-error">{errors.amount.message}</span>}
+                                {expenseId && <span className="label-text-alt mt-1 text-base-content/50">Estornos importados podem permanecer com valor negativo.</span>}
                             </label>
                             <label className="form-control w-full">
                                 <span className="label-text mb-1 font-medium">Data da despesa</span>

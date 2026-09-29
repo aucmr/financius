@@ -12,7 +12,7 @@ export function SignOutButton({ collapsed = false }: SignOutButtonProps) {
     return (
         <Link
             href="/"
-            className=" w-full rounded-field px-3 text-sm"
+            className="min-h-10 w-full rounded-field px-3 text-sm"
             onClick={(event) => {
                 event.preventDefault();
                 void signOut({ callbackUrl: "/" });

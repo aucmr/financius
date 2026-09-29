@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { expenseFormSchema } from "@/src/app/(app)/despesas/_lib/schemas";
+import {
+  expenseEditFormSchema,
+  expenseFormSchema,
+} from "@/src/app/(app)/despesas/_lib/schemas";
 
 const validExpense = {
   description: "Mercado da semana",
@@ -40,5 +43,19 @@ describe("expense form schema", () => {
     }
 
     expect(expenseFormSchema.safeParse(input).success).toBe(false);
+  });
+
+  it("accepts signed amounts only when editing", () => {
+    expect(
+      expenseFormSchema.safeParse({ ...validExpense, amount: "-12,50" })
+        .success,
+    ).toBe(false);
+    expect(
+      expenseEditFormSchema.safeParse({ ...validExpense, amount: "-12,50" })
+        .success,
+    ).toBe(true);
+    expect(
+      expenseEditFormSchema.safeParse({ ...validExpense, amount: "0" }).success,
+    ).toBe(false);
   });
 });

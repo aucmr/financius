@@ -142,6 +142,11 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                                                                         {expense.description}
                                                                     </span>
                                                                     <span className="flex flex-wrap gap-1">
+                                                                        {expense.importSource && (
+                                                                            <span className="badge badge-soft badge-info badge-xs">
+                                                                                Importada {expense.importSource}
+                                                                            </span>
+                                                                        )}
                                                                         {expense.shared && (
                                                                             <span className="badge badge-soft badge-primary badge-xs">
                                                                                 Compartilhada
@@ -153,6 +158,11 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                                                                             </span>
                                                                         )}
                                                                     </span>
+                                                                    {expense.creditCardTransactionDate && (
+                                                                        <span className="text-xs text-base-content/50">
+                                                                            Compra em {formatDate(expense.creditCardTransactionDate)}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </td>
                                                             <td className="text-sm text-base-content/65">

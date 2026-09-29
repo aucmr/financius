@@ -17,6 +17,18 @@ enum TransactionType {
     INCOME
 }
 
+enum ImportSource {
+    XP
+    BTG
+    BB
+}
+
+enum ImportBatchStatus {
+    COMPLETED
+    PARTIAL
+    FAILED
+}
+
 model User {
     id           String   @id @default(cuid())
     email        String   @unique
@@ -30,6 +42,7 @@ model User {
     responsibleExpenses Expense[]        @relation("ExpenseResponsibleUser")
     income              Income[]
     ownedIncome         Income[]         @relation("IncomeOwnerUser")
+    importBatches       ImportBatch[]    @relation("ImportBatchCreator")
 }
 
 model Household {
@@ -38,8 +51,9 @@ model Household {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    members  HouseholdMember[]
-    expenses Expense[]
+    members       HouseholdMember[]
+    expenses      Expense[]
+    importBatches ImportBatch[]
 }
 
 model HouseholdMember {
@@ -84,6 +98,10 @@ model Expense {
     profileCategoryId         String
     userId                    String
     responsibleUserId         String
+    importBatchId             String?
+    importFingerprint         String?
+    importRowNumber           Int?
+    importMetadata            Json?
     notes                     String?
     recurring                 Boolean   @default(false)
     shared                    Boolean   @default(false)
@@ -96,9 +114,37 @@ model Expense {
     profileCategory Category        @relation("ExpenseProfileCategory", fields: [profileCategoryId], references: [id], onDelete: Restrict)
     user            User            @relation(fields: [userId], references: [id])
     responsibleUser User            @relation("ExpenseResponsibleUser", fields: [responsibleUserId], references: [id])
+    importBatch     ImportBatch?    @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
 
     @@index([householdId, date])
     @@index([date, amount])
+    @@index([householdId, importFingerprint])
+    @@index([importBatchId])
+}
+
+model ImportBatch {
+    id              String            @id @default(cuid())
+    householdId     String
+    userId          String
+    source          ImportSource
+    fileName        String
+    fileFingerprint String
+    statementDate   DateTime?         @db.Date
+    status          ImportBatchStatus
+    totalRows       Int
+    importedRows    Int
+    ignoredRows     Int               @default(0)
+    skippedRows     Int               @default(0)
+    failedRows      Int               @default(0)
+    createdAt       DateTime          @default(now())
+    updatedAt       DateTime          @updatedAt
+
+    household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+    user      User      @relation("ImportBatchCreator", fields: [userId], references: [id], onDelete: Restrict)
+    expenses  Expense[]
+
+    @@index([householdId, createdAt])
+    @@index([householdId, fileFingerprint])
 }
 
 model AreaSubcategory {

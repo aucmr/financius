@@ -71,7 +71,7 @@ export function Sidebar({
                 <SidebarNav collapsed={collapsed} onNavigate={onNavigate} />
             </div>
 
-            <div className={cn("drawer-footer flex flex-col gap-4 p-4", collapsed && "sm:px-3")}>
+            <div className={cn("flex flex-col gap-4 p-4", collapsed && "sm:px-3")}>
                 <div className="border-t border-base-content/15 pt-4">
                     <ul className="menu menu-sm w-full gap-1 p-0">
                         <li>

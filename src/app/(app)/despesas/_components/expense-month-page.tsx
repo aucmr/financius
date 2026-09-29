@@ -31,6 +31,10 @@ export function ExpenseMonthPage({ data }: ExpenseMonthPageProps) {
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <MonthNavigation month={data.month} />
+                    <Link href="/despesas/importar" className="btn btn-soft btn-secondary gap-2">
+                        <span className="icon-[tabler--file-import] size-4" aria-hidden="true" />
+                        Importar arquivo
+                    </Link>
                     <Link href="/despesas/nova" className="btn btn-primary gap-2">
                         <span className="icon-[tabler--plus] size-4" aria-hidden="true" />
                         Nova despesa
