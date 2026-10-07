@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CreditCardIcon, SaveIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 
 import {
     createExpenseAction,
@@ -16,7 +18,16 @@ import {
     type ExpenseFormValues,
 } from "@/src/app/(app)/despesas/_lib/schemas";
 import type { ExpenseOptions } from "@/src/app/(app)/despesas/_lib/types";
-import { getNotyf } from "@/src/lib/utils/notyf";
+import { Alert, AlertDescription } from "@/src/components/ui/alert";
+import { Button, buttonVariants } from "@/src/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Checkbox } from "@/src/components/ui/checkbox";
+import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/src/components/ui/field";
+import { Input } from "@/src/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/src/components/ui/input-group";
+import { NativeSelect, NativeSelectOption } from "@/src/components/ui/native-select";
+import { Spinner } from "@/src/components/ui/spinner";
+import { Textarea } from "@/src/components/ui/textarea";
 
 type ExpenseFormProps = {
     expenseId?: string;
@@ -64,153 +75,174 @@ export function ExpenseForm({ expenseId, options, initialValues, householdName }
             Object.entries(result.fieldErrors ?? {}).forEach(([field, message]) => {
                 setError(field as keyof ExpenseFormValues, { message });
             });
-            getNotyf()?.error(result.message);
+            toast.error(result.message);
             return;
         }
 
-        getNotyf()?.success(result.message);
+        toast.success(result.message);
         router.push("/despesas");
         router.refresh();
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6" noValidate>
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.6fr)]">
-                <section className="card bg-base-100 shadow-md">
-                    <div className="card-body gap-5">
-                        <div>
-                            <h2 className="card-title text-xl">Dados do lançamento</h2>
-                            <p className="text-sm text-base-content/60">
-                                Registre uma saída para o household {householdName}.
-                            </p>
-                        </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-xl">Dados do lançamento</CardTitle>
+                        <CardDescription>Registre uma saída para o household {householdName}.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <FieldGroup>
+                            <Field data-invalid={errors.description ? true : undefined}>
+                                <FieldLabel htmlFor="description">Descrição</FieldLabel>
+                                <Input
+                                    id="description"
+                                    type="text"
+                                    placeholder="Ex.: Mercado da semana"
+                                    aria-invalid={errors.description ? true : undefined}
+                                    {...register("description")}
+                                />
+                                {errors.description?.message ? <FieldError>{errors.description.message}</FieldError> : null}
+                            </Field>
 
-                        <label className="form-control w-full">
-                            <span className="label-text mb-1 font-medium">Descrição</span>
-                            <input
-                                type="text"
-                                className="input input-bordered w-full"
-                                placeholder="Ex.: Mercado da semana"
-                                {...register("description")}
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Field data-invalid={errors.amount ? true : undefined}>
+                                    <FieldLabel htmlFor="amount">Valor</FieldLabel>
+                                    <InputGroup>
+                                        <InputGroupAddon>
+                                            <InputGroupText>R$</InputGroupText>
+                                        </InputGroupAddon>
+                                        <InputGroupInput
+                                            id="amount"
+                                            type="text"
+                                            inputMode="decimal"
+                                            placeholder="0,00"
+                                            aria-invalid={errors.amount ? true : undefined}
+                                            {...register("amount")}
+                                        />
+                                    </InputGroup>
+                                    {errors.amount?.message ? <FieldError>{errors.amount.message}</FieldError> : null}
+                                    {expenseId && <FieldDescription>Estornos importados podem permanecer com valor negativo.</FieldDescription>}
+                                </Field>
+                                <Field data-invalid={errors.date ? true : undefined}>
+                                    <FieldLabel htmlFor="date">Data da despesa</FieldLabel>
+                                    <Input id="date" type="date" aria-invalid={errors.date ? true : undefined} {...register("date")} />
+                                    {errors.date?.message ? <FieldError>{errors.date.message}</FieldError> : null}
+                                </Field>
+                            </div>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+                            <Field data-invalid={errors.areaCategoryId ? true : undefined}>
+                                <FieldLabel htmlFor="areaCategoryId">Categoria de área</FieldLabel>
+                                <NativeSelect id="areaCategoryId" className="w-full" aria-invalid={errors.areaCategoryId ? true : undefined} {...register("areaCategoryId")}>
+                                    <NativeSelectOption value="">Selecione uma área</NativeSelectOption>
+                                    {options.areaCategories.map((item) => (
+                                        <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>
+                                    ))}
+                                </NativeSelect>
+                                {errors.areaCategoryId?.message ? <FieldError>{errors.areaCategoryId.message}</FieldError> : null}
+                            </Field>
+                            <Field data-invalid={errors.areaSubcategoryId ? true : undefined}>
+                                <FieldLabel htmlFor="areaSubcategoryId">Subcategoria</FieldLabel>
+                                <NativeSelect id="areaSubcategoryId" className="w-full" aria-invalid={errors.areaSubcategoryId ? true : undefined} disabled={!areaCategoryId} {...register("areaSubcategoryId")}>
+                                    <NativeSelectOption value="">Selecione uma subcategoria</NativeSelectOption>
+                                    {subcategories.map((item) => (
+                                        <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>
+                                    ))}
+                                </NativeSelect>
+                                {errors.areaSubcategoryId?.message ? <FieldError>{errors.areaSubcategoryId.message}</FieldError> : null}
+                            </Field>
+                            </div>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+                            <Field data-invalid={errors.profileCategoryId ? true : undefined}>
+                                <FieldLabel htmlFor="profileCategoryId">Categoria de perfil</FieldLabel>
+                                <NativeSelect id="profileCategoryId" className="w-full" aria-invalid={errors.profileCategoryId ? true : undefined} {...register("profileCategoryId")}>
+                                    <NativeSelectOption value="">Selecione um perfil</NativeSelectOption>
+                                    {options.profileCategories.map((item) => (
+                                        <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>
+                                    ))}
+                                </NativeSelect>
+                                {errors.profileCategoryId?.message ? <FieldError>{errors.profileCategoryId.message}</FieldError> : null}
+                            </Field>
+                            <Field data-invalid={errors.responsibleUserId ? true : undefined}>
+                                <FieldLabel htmlFor="responsibleUserId">Responsável</FieldLabel>
+                                <NativeSelect id="responsibleUserId" className="w-full" aria-invalid={errors.responsibleUserId ? true : undefined} {...register("responsibleUserId")}>
+                                    <NativeSelectOption value="">Selecione uma pessoa</NativeSelectOption>
+                                    {options.members.map((item) => (
+                                        <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>
+                                    ))}
+                                </NativeSelect>
+                                {errors.responsibleUserId?.message ? <FieldError>{errors.responsibleUserId.message}</FieldError> : null}
+                            </Field>
+                            </div>
+
+                            <Field data-invalid={errors.notes ? true : undefined}>
+                                <FieldLabel htmlFor="notes">
+                                    Observações <span className="font-normal text-muted-foreground">(opcional)</span>
+                                </FieldLabel>
+                                <Textarea
+                                    id="notes"
+                                    className="min-h-24"
+                                    placeholder="Detalhes úteis sobre este lançamento"
+                                    aria-invalid={errors.notes ? true : undefined}
+                                    {...register("notes")}
+                                />
+                                {errors.notes?.message ? <FieldError>{errors.notes.message}</FieldError> : null}
+                            </Field>
+                        </FieldGroup>
+                    </CardContent>
+                </Card>
+
+                <Card className="h-fit">
+                    <CardHeader>
+                        <CardTitle className="text-xl">Classificação</CardTitle>
+                        <CardDescription>Use as marcações para organizar a leitura mensal.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <FieldGroup>
+                            <Controller
+                                control={control}
+                                name="shared"
+                                render={({ field }) => (
+                                    <Field orientation="horizontal">
+                                        <Checkbox id="shared" name={field.name} checked={Boolean(field.value)} onCheckedChange={field.onChange} />
+                                        <FieldContent>
+                                            <FieldLabel htmlFor="shared">Despesa compartilhada</FieldLabel>
+                                            <FieldDescription>Entra no resumo de divisão do mês.</FieldDescription>
+                                        </FieldContent>
+                                    </Field>
+                                )}
                             />
-                            {errors.description?.message && <span className="label-text-alt mt-1 text-error">{errors.description.message}</span>}
-                        </label>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="form-control w-full">
-                                <span className="label-text mb-1 font-medium">Valor</span>
-                                <label className="input input-bordered flex items-center gap-2">
-                                    <span className="text-sm text-base-content/50">R$</span>
-                                    <input
-                                        type="text"
-                                        inputMode="decimal"
-                                        className="grow"
-                                        placeholder="0,00"
-                                        {...register("amount")}
-                                    />
-                                </label>
-                                {errors.amount?.message && <span className="label-text-alt mt-1 text-error">{errors.amount.message}</span>}
-                                {expenseId && <span className="label-text-alt mt-1 text-base-content/50">Estornos importados podem permanecer com valor negativo.</span>}
-                            </label>
-                            <label className="form-control w-full">
-                                <span className="label-text mb-1 font-medium">Data da despesa</span>
-                                <input type="date" className="input input-bordered w-full" {...register("date")} />
-                                {errors.date?.message && <span className="label-text-alt mt-1 text-error">{errors.date.message}</span>}
-                            </label>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="form-control w-full">
-                                <span className="label-text mb-1 font-medium">Categoria de área</span>
-                                <select className="select select-bordered w-full" {...register("areaCategoryId")}>
-                                    <option value="">Selecione uma área</option>
-                                    {options.areaCategories.map((category) => (
-                                        <option key={category.id} value={category.id}>{category.name}</option>
-                                    ))}
-                                </select>
-                                {errors.areaCategoryId?.message && <span className="label-text-alt mt-1 text-error">{errors.areaCategoryId.message}</span>}
-                            </label>
-                            <label className="form-control w-full">
-                                <span className="label-text mb-1 font-medium">Subcategoria</span>
-                                <select
-                                    className="select select-bordered w-full"
-                                    disabled={!areaCategoryId}
-                                    {...register("areaSubcategoryId")}
-                                >
-                                    <option value="">Selecione uma subcategoria</option>
-                                    {subcategories.map((subcategory) => (
-                                        <option key={subcategory.id} value={subcategory.id}>{subcategory.name}</option>
-                                    ))}
-                                </select>
-                                {errors.areaSubcategoryId?.message && <span className="label-text-alt mt-1 text-error">{errors.areaSubcategoryId.message}</span>}
-                            </label>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="form-control w-full">
-                                <span className="label-text mb-1 font-medium">Categoria de perfil</span>
-                                <select className="select select-bordered w-full" {...register("profileCategoryId")}>
-                                    <option value="">Selecione um perfil</option>
-                                    {options.profileCategories.map((category) => (
-                                        <option key={category.id} value={category.id}>{category.name}</option>
-                                    ))}
-                                </select>
-                                {errors.profileCategoryId?.message && <span className="label-text-alt mt-1 text-error">{errors.profileCategoryId.message}</span>}
-                            </label>
-                            <label className="form-control w-full">
-                                <span className="label-text mb-1 font-medium">Responsável</span>
-                                <select className="select select-bordered w-full" {...register("responsibleUserId")}>
-                                    <option value="">Selecione uma pessoa</option>
-                                    {options.members.map((member) => (
-                                        <option key={member.id} value={member.id}>{member.name}</option>
-                                    ))}
-                                </select>
-                                {errors.responsibleUserId?.message && <span className="label-text-alt mt-1 text-error">{errors.responsibleUserId.message}</span>}
-                            </label>
-                        </div>
-
-                        <label className="form-control w-full">
-                            <span className="label-text mb-1 font-medium">Observações <span className="font-normal text-base-content/50">(opcional)</span></span>
-                            <textarea className="textarea textarea-bordered min-h-24 w-full" placeholder="Detalhes úteis sobre este lançamento" {...register("notes")} />
-                            {errors.notes?.message && <span className="label-text-alt mt-1 text-error">{errors.notes.message}</span>}
-                        </label>
-                    </div>
-                </section>
-
-                <section className="card h-fit bg-base-100 shadow-md">
-                    <div className="card-body gap-5">
-                        <div>
-                            <h2 className="card-title text-xl">Classificação</h2>
-                            <p className="text-sm text-base-content/60">Use as marcações para organizar a leitura mensal.</p>
-                        </div>
-                        <label className="flex cursor-pointer items-start gap-3 rounded-box border border-base-300 p-3">
-                            <input type="checkbox" className="checkbox checkbox-primary mt-0.5" {...register("shared")} />
-                            <span>
-                                <span className="block font-medium">Despesa compartilhada</span>
-                                <span className="mt-1 block text-xs text-base-content/60">Entra no resumo de divisão do mês.</span>
-                            </span>
-                        </label>
-                        <label className="flex cursor-pointer items-start gap-3 rounded-box border border-base-300 p-3">
-                            <input type="checkbox" className="checkbox checkbox-secondary mt-0.5" {...register("recurring")} />
-                            <span>
-                                <span className="block font-medium">Despesa recorrente</span>
-                                <span className="mt-1 block text-xs text-base-content/60">Apenas uma marcação nesta primeira versão.</span>
-                            </span>
-                        </label>
-                        <div className="alert alert-soft alert-info items-start text-sm">
-                            <span className="icon-[tabler--credit-card] mt-0.5 size-5 shrink-0" aria-hidden="true" />
-                            <p>A data da transação de cartão será preenchida pela futura importação de fatura.</p>
-                        </div>
-                    </div>
-                </section>
+                            <Controller
+                                control={control}
+                                name="recurring"
+                                render={({ field }) => (
+                                    <Field orientation="horizontal">
+                                        <Checkbox id="recurring" name={field.name} checked={Boolean(field.value)} onCheckedChange={field.onChange} />
+                                        <FieldContent>
+                                            <FieldLabel htmlFor="recurring">Despesa recorrente</FieldLabel>
+                                            <FieldDescription>Apenas uma marcação nesta primeira versão.</FieldDescription>
+                                        </FieldContent>
+                                    </Field>
+                                )}
+                            />
+                            <Alert>
+                                <CreditCardIcon aria-hidden="true" />
+                                <AlertDescription>A data da transação de cartão será preenchida pela futura importação de fatura.</AlertDescription>
+                            </Alert>
+                        </FieldGroup>
+                    </CardContent>
+                </Card>
             </div>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <Link href="/despesas" className="btn btn-soft btn-secondary">Cancelar</Link>
-                <button type="submit" className="btn btn-primary gap-2" disabled={isSubmitting}>
-                    {isSubmitting ? <span className="loading loading-spinner loading-xs" aria-hidden="true" /> : <span className="icon-[tabler--device-floppy] size-4" aria-hidden="true" />}
+                <Link href="/despesas" className={buttonVariants({ variant: "secondary" })}>Cancelar</Link>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? <Spinner data-icon="inline-start" /> : <SaveIcon data-icon="inline-start" />}
                     {isSubmitting ? "Salvando..." : expenseId ? "Salvar alterações" : "Criar despesa"}
-                </button>
+                </Button>
             </div>
         </form>
     );

@@ -9,8 +9,12 @@ import {
     signUpInputSchema,
     type SignUpInput,
 } from "@/src/app/(auth)/_lib/schemas";
-import { getNotyf } from "@/src/lib/utils/notyf";
+import { Button } from "@/src/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/src/components/ui/field";
+import { Input } from "@/src/components/ui/input";
 import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 
 export function SignUpForm() {
     const router = useRouter();
@@ -26,8 +30,7 @@ export function SignUpForm() {
         const result = await signUpAction(values);
 
         if (!result.ok) {
-            const notyf = getNotyf();
-            notyf?.error(result.message);
+            toast.error(result.message);
             return;
         }
 
@@ -39,8 +42,7 @@ export function SignUpForm() {
         });
 
         if (!signInResult || signInResult.error) {
-            const notyf = getNotyf();
-            notyf?.error("Account created, but automatic sign-in failed.");
+            toast.error("Account created, but automatic sign-in failed.");
             router.push("/sign-in");
             return;
         }
@@ -51,55 +53,53 @@ export function SignUpForm() {
     };
 
     return (
-        <section className="card w-full border border-base-300 bg-base-100 shadow-sm">
-            <div className="card-body gap-4">
-                <h1 className="card-title text-2xl">Create Account</h1>
-                <p className="text-sm text-base-content/70">
-                    Register an account to start using the application.
-                </p>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="mt-2 flex flex-col gap-3" noValidate>
-                    <label className="form-control w-full">
-                        <span className="label-text mb-1">Name</span>
-                        <input
-                            type="text"
-                            placeholder="Your name"
-                            className="input input-bordered w-full"
-                            {...register("name")}
-                        />
-                        {errors.name?.message ? (
-                            <span className="label text-error text-xs">{errors.name.message}</span>
-                        ) : null}
-                    </label>
-                    <label className="form-control w-full">
-                        <span className="label-text mb-1">Email</span>
-                        <input
-                            type="email"
-                            placeholder="you@example.com"
-                            className="input input-bordered w-full"
-                            {...register("email")}
-                        />
-                        {errors.email?.message ? (
-                            <span className="label text-error text-xs">{errors.email.message}</span>
-                        ) : null}
-                    </label>
-                    <label className="form-control w-full">
-                        <span className="label-text mb-1">Password</span>
-                        <input
-                            type="password"
-                            placeholder="At least 8 characters"
-                            className="input input-bordered w-full"
-                            {...register("password")}
-                        />
-                        {errors.password?.message ? (
-                            <span className="label text-error text-xs">{errors.password.message}</span>
-                        ) : null}
-                    </label>
-                    <button type="submit" className="btn btn-primary mt-2" disabled={isSubmitting}>
-                        {isSubmitting ? "Creating account..." : "Create account"}
-                    </button>
+        <Card className="w-full">
+            <CardHeader>
+                <CardTitle className="text-2xl">Create Account</CardTitle>
+                <CardDescription>Register an account to start using the application.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                    <FieldGroup>
+                        <Field data-invalid={errors.name ? true : undefined}>
+                            <FieldLabel htmlFor="name">Name</FieldLabel>
+                            <Input
+                                id="name"
+                                type="text"
+                                placeholder="Your name"
+                                aria-invalid={errors.name ? true : undefined}
+                                {...register("name")}
+                            />
+                            {errors.name?.message ? <FieldError>{errors.name.message}</FieldError> : null}
+                        </Field>
+                        <Field data-invalid={errors.email ? true : undefined}>
+                            <FieldLabel htmlFor="email">Email</FieldLabel>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="you@example.com"
+                                aria-invalid={errors.email ? true : undefined}
+                                {...register("email")}
+                            />
+                            {errors.email?.message ? <FieldError>{errors.email.message}</FieldError> : null}
+                        </Field>
+                        <Field data-invalid={errors.password ? true : undefined}>
+                            <FieldLabel htmlFor="password">Password</FieldLabel>
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="At least 8 characters"
+                                aria-invalid={errors.password ? true : undefined}
+                                {...register("password")}
+                            />
+                            {errors.password?.message ? <FieldError>{errors.password.message}</FieldError> : null}
+                        </Field>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? "Creating account..." : "Create account"}
+                        </Button>
+                    </FieldGroup>
                 </form>
-            </div>
-        </section>
+            </CardContent>
+        </Card>
     );
 }

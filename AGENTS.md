@@ -20,7 +20,7 @@ WebApp for couples organize their finances, with montly shared expenes stripping
 ### Core Tech Stack
 
 - **Framework:** Next.js v16 (App Router, strict TypeScript)
-- **Styling & UI:** Tailwind CSS v4 + FlyonUI
+- **Styling & UI:** Tailwind CSS v4 + shadcn/ui (preset Nova, base-ui) + Lucide React icons + Sonner toasts
 - **Database & ORM:** PostgreSQL + Prisma v7
 - **Authentication:** NextAuth.js v5
 - **Forms & Data:** React Hook Form + Zod, Server Actions as primary mutation mechanism
@@ -32,28 +32,30 @@ WebApp for couples organize their finances, with montly shared expenes stripping
 
 ## 3. Button Guidelines
 
-- Use FlyonUI `btn` as the base class for button actions.
-- Use `btn btn-primary` for primary mutations and submit actions.
-- Use `btn btn-soft btn-secondary` for ordinary secondary actions.
-- Use an error variant for destructive actions and keep shell toggles such as menu or collapse controls as `btn-text`.
-- Do not combine conflicting variants such as `btn-primary btn-ghost`.
-- Icon-only buttons must use an appropriate `btn-square` or `btn-circle` modifier and an accessible name.
+- Use the shadcn `Button` from `@/src/components/ui/button`; for links styled as buttons use `<Link className={buttonVariants(...)}>`.
+- Use the default variant for primary mutations and submit actions.
+- Use `variant="secondary"` or `variant="outline"` for ordinary secondary actions.
+- Use `variant="destructive"` for destructive actions and `variant="ghost"` for shell toggles such as menu or collapse controls.
+- Icon-only buttons must use an `icon*` size and an accessible name (`aria-label` or `sr-only` text).
+- Icons inside buttons use `data-icon="inline-start|inline-end"` and no sizing classes; loading states compose `Spinner` with `disabled`.
 - Follow [.github/instructions/buttons.instructions.md](.github/instructions/buttons.instructions.md) for detailed button patterns.
 
 ## 4. Card Guidelines
 
-- Use `card bg-base-100 shadow-md` as the standard neutral content surface.
-- Use `card-body` for card content, `card-title` for headings, and `stats` for metric groups.
-- Use `card-border` only when a visible border is intentional; do not repeat border and shadow utilities on every card.
+- Use `Card` with `CardHeader`, `CardTitle`, `CardDescription`, `CardContent` and `CardFooter` as the standard content surface.
+- Use `size="sm"` cards for compact metrics and a responsive grid of cards for metric groups.
 - Do not nest cards or force dense tables and data rows into individual cards.
-- Use a card for empty states when it improves the page surface, but do not rely on FlyonUI JavaScript-only behavior unless the runtime is initialized.
+- Use `Empty` for empty states, `Alert` for callouts and `Badge` for status labels.
+- Use semantic tokens (`bg-muted`, `text-muted-foreground`), never raw colors.
 - Follow [.github/instructions/cards.instructions.md](.github/instructions/cards.instructions.md) for detailed card patterns.
 
 ## 5. Form Rules
 
 - Use Zod as the single source of truth and keep feature schemas in `_lib/schemas.ts`.
 - Use React Hook Form with `zodResolver` in Client Components.
-- Use FlyonUI classes for controls and show field errors near their inputs.
+- Use shadcn `FieldGroup`/`Field` with `Input`, `NativeSelect`, `Checkbox` and show field errors near their inputs.
+- Use `toast` from `sonner` for success and error feedback.
+- Use icons from `lucide-react`, passed as components.
 - Server Actions must accept `unknown` and validate the payload again on the server.
 - Derive `userId`, `householdId`, ownership and authorization from the server context.
 - Consult [.github/instructions/forms.instructions.md](.github/instructions/forms.instructions.md) for complete examples and control patterns.

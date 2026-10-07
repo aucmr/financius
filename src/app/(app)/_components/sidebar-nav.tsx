@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { LayoutDashboardIcon, ReceiptTextIcon, WalletIcon, type LucideIcon } from "lucide-react";
+
+import { buttonVariants } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils/cn";
 
 export const appNavigation = [
@@ -10,21 +13,21 @@ export const appNavigation = [
         href: "/dashboard",
         label: "Dashboard",
         description: "Visão geral das finanças",
-        icon: "icon-[tabler--layout-dashboard]",
+        icon: LayoutDashboardIcon,
     },
     {
         href: "/receitas",
         label: "Receitas",
         description: "Acompanhe as entradas",
-        icon: "icon-[tabler--wallet]",
+        icon: WalletIcon,
     },
     {
         href: "/despesas",
         label: "Despesas",
         description: "Acompanhe as saídas",
-        icon: "icon-[tabler--receipt-2]",
+        icon: ReceiptTextIcon,
     },
-] as const;
+] satisfies ReadonlyArray<{ href: string; label: string; description: string; icon: LucideIcon }>;
 
 type SidebarNavProps = {
     collapsed: boolean;
@@ -36,10 +39,10 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
 
     return (
         <nav aria-label="Navegação principal">
-            <p className={cn("mb-2 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-base-content/40", collapsed && "sm:sr-only")}>
+            <p className={cn("mb-2 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground", collapsed && "sm:sr-only")}>
                 Principal
             </p>
-            <ul className="menu menu-sm w-full gap-1 p-0">
+            <ul className="flex w-full flex-col gap-1">
                 {appNavigation.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -48,15 +51,15 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                             <Link
                                 href={item.href}
                                 className={cn(
-                                    "min-h-10 w-full rounded-field px-3 text-sm",
-                                    isActive && "menu-active",
+                                    buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+                                    "h-10 w-full justify-start gap-3 px-3 text-sm",
                                     collapsed && "sm:justify-center sm:px-0",
                                 )}
                                 aria-current={isActive ? "page" : undefined}
                                 title={collapsed ? item.label : undefined}
                                 onClick={onNavigate}
                             >
-                                <span className={cn(item.icon, "size-5 shrink-0")} aria-hidden="true" />
+                                <item.icon aria-hidden="true" />
                                 <span className={cn("min-w-0 truncate", collapsed && "sm:hidden")}>
                                     {item.label}
                                 </span>

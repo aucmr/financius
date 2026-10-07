@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowLeftIcon, CheckIcon, CopyIcon, FileSearchIcon, LandmarkIcon, ReceiptTextIcon, ShieldCheckIcon, TriangleAlertIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -14,6 +15,16 @@ import type { ImportExpenseRowInput } from "@/src/app/(app)/despesas/importar/_l
 import type { ImportDuplicateMatch } from "@/src/app/(app)/despesas/importar/_lib/services";
 import type { ExpenseImportSuggestion } from "@/src/app/(app)/despesas/importar/_lib/suggestions";
 import type { ExpenseOptions } from "@/src/app/(app)/despesas/_lib/types";
+import { Alert, AlertDescription, AlertTitle } from "@/src/components/ui/alert";
+import { Badge } from "@/src/components/ui/badge";
+import { Button, buttonVariants } from "@/src/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Checkbox } from "@/src/components/ui/checkbox";
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldTitle } from "@/src/components/ui/field";
+import { Input } from "@/src/components/ui/input";
+import { Label } from "@/src/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/src/components/ui/native-select";
+import { Spinner } from "@/src/components/ui/spinner";
 import {
   decodeCsvBytes,
   detectCsvSource,
@@ -57,7 +68,7 @@ function createReviewRow(
     profileCategoryId: "",
     responsibleUserId,
     notes: "",
-    shared: true,
+    shared: row.source === "XP",
     recurring: false,
     allowDuplicateImport: false,
   };
@@ -436,267 +447,273 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
 
   if (step === "result" && result) {
     return (
-      <section className="mx-auto w-full max-w-5xl space-y-8">
-        <header className="space-y-2">
-          <span className="badge badge-soft badge-primary">Importacao</span>
-          <h1 className="text-3xl font-semibold tracking-tight text-base-content sm:text-4xl">Importacao concluida</h1>
-          <p className="text-base text-base-content/60">O lote foi registrado no household {householdName}.</p>
+      <section className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+        <header className="flex flex-col items-start gap-2">
+          <Badge variant="secondary">Importacao</Badge>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Importacao concluida</h1>
+          <p className="text-base text-muted-foreground">O lote foi registrado no household {householdName}.</p>
         </header>
-        <div className="card bg-base-100 shadow-md">
-          <div className="card-body gap-6">
+        <Card>
+          <CardContent className="flex flex-col gap-6">
             <div className="grid gap-4 sm:grid-cols-4">
-              <div className="stat rounded-box bg-success/10 px-4 py-3">
-                <div className="stat-title">Importadas</div>
-                <div className="stat-value text-2xl text-success">{result.importedRows}</div>
-              </div>
-              <div className="stat rounded-box bg-base-200 px-4 py-3">
-                <div className="stat-title">Ignoradas</div>
-                <div className="stat-value text-2xl">{result.ignoredRows}</div>
-              </div>
-              <div className="stat rounded-box bg-base-200 px-4 py-3">
-                <div className="stat-title">Puladas</div>
-                <div className="stat-value text-2xl">{result.skippedRows}</div>
-              </div>
-              <div className="stat rounded-box bg-warning/10 px-4 py-3">
-                <div className="stat-title">Falhas</div>
-                <div className="stat-value text-2xl text-warning">{result.failedRows}</div>
-              </div>
+              <ResultStat title="Importadas" value={result.importedRows} />
+              <ResultStat title="Ignoradas" value={result.ignoredRows} />
+              <ResultStat title="Puladas" value={result.skippedRows} />
+              <ResultStat title="Falhas" value={result.failedRows} />
             </div>
             {result.errors.length > 0 && (
-              <div className="alert alert-warning items-start">
-                <span className="icon-[tabler--alert-triangle] mt-0.5 size-5 shrink-0" aria-hidden="true" />
-                <div>
-                  <p className="font-medium">Algumas linhas nao foram gravadas.</p>
-                  <ul className="mt-1 list-disc space-y-1 ps-5 text-sm">
+              <Alert variant="destructive">
+                <TriangleAlertIcon aria-hidden="true" />
+                <AlertTitle>Algumas linhas nao foram gravadas.</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc ps-5">
                     {result.errors.slice(0, 8).map((message) => <li key={message}>{message}</li>)}
                   </ul>
-                </div>
-              </div>
+                </AlertDescription>
+              </Alert>
             )}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <a href="/despesas" className="btn btn-primary gap-2">
-                <span className="icon-[tabler--receipt] size-4" aria-hidden="true" />
+              <a href="/despesas" className={buttonVariants()}>
+                <ReceiptTextIcon data-icon="inline-start" aria-hidden="true" />
                 Ver despesas
               </a>
-              <button type="button" className="btn btn-soft btn-secondary" onClick={reset}>
+              <Button type="button" variant="secondary" onClick={reset}>
                 Importar outro arquivo
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </section>
     );
   }
 
   if (step === "review" && currentRow) {
     return (
-      <section className="mx-auto w-full max-w-5xl space-y-6">
+      <section className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <span className="badge badge-soft badge-primary">Revisao de importacao</span>
-            <h1 className="text-3xl font-semibold tracking-tight text-base-content">Confirme cada lançamento</h1>
-            <p className="text-base text-base-content/60">As sugestoes preenchem a linha, mas nada sera salvo sem sua confirmacao.</p>
+          <div className="flex flex-col items-start gap-2">
+            <Badge variant="secondary">Revisao de importacao</Badge>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Confirme cada lançamento</h1>
+            <p className="text-base text-muted-foreground">As sugestoes preenchem a linha, mas nada sera salvo sem sua confirmacao.</p>
           </div>
-          <div className="text-sm text-base-content/60">{currentIndex + 1} de {rows.length}</div>
+          <div className="text-sm text-muted-foreground">{currentIndex + 1} de {rows.length}</div>
         </header>
-        <div className="h-2 overflow-hidden rounded-full bg-base-200">
+        <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={1} aria-valuemax={rows.length} aria-valuenow={currentIndex + 1}>
           <div className="h-full bg-primary transition-all" style={{ width: `${((currentIndex + 1) / rows.length) * 100}%` }} />
         </div>
-        <div className="card bg-base-100 shadow-md">
-          <div className="card-body gap-6">
-            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem_12rem]">
-              <label className="form-control w-full">
-                <span className="label-text mb-1 font-medium">Descricao</span>
-                <input className="input input-bordered w-full" value={currentRow.description} onChange={(event) => updateCurrentRow({ description: event.target.value })} />
-              </label>
-              <label className="form-control w-full">
-                <span className="label-text mb-1 font-medium">Valor</span>
-                <input className="input input-bordered w-full" inputMode="decimal" value={currentRow.amount} onChange={(event) => updateCurrentRow({ amount: event.target.value })} />
-              </label>
-              <div className="form-control w-full">
-                <span className="label-text mb-1 font-medium">Origem</span>
-                <div className="input input-bordered flex items-center gap-2 text-sm text-base-content/70">{sourceLabels[currentRow.source]}</div>
+        <Card>
+          <CardContent>
+            <FieldGroup>
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem_12rem]">
+                <Field>
+                  <FieldLabel htmlFor="import-description">Descricao</FieldLabel>
+                  <Input id="import-description" value={currentRow.description} onChange={(event) => updateCurrentRow({ description: event.target.value })} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="import-amount">Valor</FieldLabel>
+                  <Input id="import-amount" inputMode="decimal" value={currentRow.amount} onChange={(event) => updateCurrentRow({ amount: event.target.value })} />
+                </Field>
+                <Field>
+                  <FieldTitle>Origem</FieldTitle>
+                  <div className="flex h-8 items-center rounded-lg border bg-muted/50 px-2.5 text-sm text-muted-foreground">{sourceLabels[currentRow.source]}</div>
+                </Field>
               </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-box border border-base-300 bg-base-200/40 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-base-content/50">Data da compra</p>
-                <p className="mt-1 font-medium">{formatDate(currentRow.transactionDate)}</p>
-                {currentRow.installment && <p className="mt-1 text-sm text-base-content/60">Parcela {currentRow.installment.current}/{currentRow.installment.total}</p>}
-              </div>
-              <div className="rounded-box border border-base-300 bg-base-200/40 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-base-content/50">Competencia</p>
-                <p className="mt-1 font-medium">{parseData?.statementDate ? formatDate(parseData.statementDate) : "Data do extrato"}</p>
-                {currentRow.cardholder && <p className="mt-1 text-sm text-base-content/60">Portador: {currentRow.cardholder}</p>}
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="font-semibold">Sugestao do historico</h2>
-                  <p className="text-sm text-base-content/60">Escolha uma sugestao ou classifique manualmente.</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg border bg-muted/40 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Data da compra</p>
+                  <p className="mt-1 font-medium">{formatDate(currentRow.transactionDate)}</p>
+                  {currentRow.installment && <p className="mt-1 text-sm text-muted-foreground">Parcela {currentRow.installment.current}/{currentRow.installment.total}</p>}
                 </div>
-                {isLoadingHelpers && <span className="loading loading-spinner loading-sm text-primary" aria-label="Carregando" />}
-              </div>
-              {suggestionError && <p className="text-sm text-warning">{suggestionError}</p>}
-              {!isLoadingHelpers && !visibleSuggestionError && visibleSuggestions.length === 0 && <p className="text-sm text-base-content/50">Nenhuma despesa semelhante encontrada.</p>}
-              <div className="grid gap-2">
-                {visibleSuggestions.map((suggestion) => (
-                  <button
-                    type="button"
-                    key={`${suggestion.areaCategoryId}-${suggestion.areaSubcategoryId}-${suggestion.profileCategoryId}`}
-                    className="rounded-box border border-base-300 bg-base-200/40 px-3 py-2 text-left transition-colors hover:border-primary hover:bg-primary/5"
-                    onClick={() => updateCurrentRow({
-                      areaCategoryId: suggestion.areaCategoryId,
-                      areaSubcategoryId: suggestion.areaSubcategoryId,
-                      profileCategoryId: suggestion.profileCategoryId,
-                      notes: currentRow.notes || suggestion.notes,
-                    })}
-                  >
-                    <span className="block text-sm font-medium">{suggestion.areaCategoryName} / {suggestion.areaSubcategoryName} / {suggestion.profileCategoryName}</span>
-                    <span className="text-xs text-base-content/60">{suggestion.source} · {Math.round(suggestion.confidence * 100)}% de confianca · {suggestion.matchCount} ocorrencia(s) · {suggestion.matchedDescription}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <label className="form-control w-full">
-                <span className="label-text mb-1 font-medium">Categoria de area</span>
-                <select className="select select-bordered w-full" value={currentRow.areaCategoryId} onChange={(event) => updateCurrentAreaCategory(event.target.value)}>
-                  <option value="">Selecione</option>
-                  {options.areaCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                </select>
-              </label>
-              <label className="form-control w-full">
-                <span className="label-text mb-1 font-medium">Subcategoria</span>
-                <select className="select select-bordered w-full" value={currentRow.areaSubcategoryId} disabled={!currentRow.areaCategoryId} onChange={(event) => updateCurrentRow({ areaSubcategoryId: event.target.value })}>
-                  <option value="">Selecione</option>
-                  {selectedSubcategories.map((subcategory) => <option key={subcategory.id} value={subcategory.id}>{subcategory.name}</option>)}
-                </select>
-              </label>
-              <label className="form-control w-full">
-                <span className="label-text mb-1 font-medium">Categoria de perfil</span>
-                <select className="select select-bordered w-full" value={currentRow.profileCategoryId} onChange={(event) => updateCurrentRow({ profileCategoryId: event.target.value })}>
-                  <option value="">Selecione</option>
-                  {options.profileCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                </select>
-              </label>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="form-control w-full">
-                <span className="label-text mb-1 font-medium">Responsavel</span>
-                <div className="input input-bordered flex items-center text-sm text-base-content/70">
-                  {options.members.find((member) => member.id === responsibleUserId)?.name ?? "Responsavel selecionado"}
+                <div className="rounded-lg border bg-muted/40 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Competencia</p>
+                  <p className="mt-1 font-medium">{parseData?.statementDate ? formatDate(parseData.statementDate) : "Data do extrato"}</p>
+                  {currentRow.cardholder && <p className="mt-1 text-sm text-muted-foreground">Portador: {currentRow.cardholder}</p>}
                 </div>
-                <span className="label-text-alt mt-1 text-base-content/50">Definido para todo o arquivo.</span>
               </div>
-              <label className="form-control w-full">
-                <span className="label-text mb-1 font-medium">Observacoes</span>
-                <input className="input input-bordered w-full" value={currentRow.notes} onChange={(event) => updateCurrentRow({ notes: event.target.value })} placeholder="Opcional" />
-              </label>
-            </div>
-            {visibleDuplicates.length > 0 && (
-              <div className="rounded-box border border-warning/40 bg-warning/10 p-4">
-                <div className="flex items-start gap-3">
-                  <span className="icon-[tabler--copy] mt-0.5 size-5 shrink-0 text-warning" aria-hidden="true" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">Possivel duplicidade</p>
-                    <p className="mt-1 text-sm text-base-content/70">Ja existe um lancamento com a mesma descricao, valor e data ou fingerprint.</p>
-                    {visibleDuplicates.map((duplicate) => (
-                      <p key={duplicate.id} className="mt-2 text-xs text-base-content/60">{duplicate.description} · {formatCurrency(duplicate.amount)} · {formatDate(duplicate.statementDate)}{duplicate.fileName ? ` · ${duplicate.fileName}` : ""}</p>
-                    ))}
-                    <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm">
-                      <input type="checkbox" className="checkbox checkbox-warning" checked={currentRow.allowDuplicateImport} onChange={(event) => updateCurrentRow({ allowDuplicateImport: event.target.checked })} />
-                      Importar mesmo assim
-                    </label>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-semibold">Sugestao do historico</h2>
+                    <p className="text-sm text-muted-foreground">Escolha uma sugestao ou classifique manualmente.</p>
                   </div>
+                  {isLoadingHelpers && <Spinner aria-label="Carregando" />}
+                </div>
+                {suggestionError && <p className="text-sm text-destructive">{suggestionError}</p>}
+                {!isLoadingHelpers && !visibleSuggestionError && visibleSuggestions.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma despesa semelhante encontrada.</p>}
+                <div className="grid gap-2">
+                  {visibleSuggestions.map((suggestion) => (
+                    <button
+                      type="button"
+                      key={`${suggestion.areaCategoryId}-${suggestion.areaSubcategoryId}-${suggestion.profileCategoryId}`}
+                      className="rounded-lg border bg-muted/40 px-3 py-2 text-left transition-colors hover:border-primary hover:bg-primary/5"
+                      onClick={() => updateCurrentRow({
+                        areaCategoryId: suggestion.areaCategoryId,
+                        areaSubcategoryId: suggestion.areaSubcategoryId,
+                        profileCategoryId: suggestion.profileCategoryId,
+                        notes: currentRow.notes || suggestion.notes,
+                      })}
+                    >
+                      <span className="block text-sm font-medium">{suggestion.areaCategoryName} / {suggestion.areaSubcategoryName} / {suggestion.profileCategoryName}</span>
+                      <span className="text-xs text-muted-foreground">{suggestion.source} · {Math.round(suggestion.confidence * 100)}% de confianca · {suggestion.matchCount} ocorrencia(s) · {suggestion.matchedDescription}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
-            {visibleDuplicateError && <p className="text-sm text-warning">{visibleDuplicateError}</p>}
-            <div className="flex flex-wrap gap-4">
-              <label className="flex cursor-pointer items-center gap-2 text-sm"><input type="checkbox" className="checkbox checkbox-primary" checked={currentRow.shared} onChange={(event) => updateCurrentRow({ shared: event.target.checked })} /> Compartilhada</label>
-              <label className="flex cursor-pointer items-center gap-2 text-sm"><input type="checkbox" className="checkbox checkbox-secondary" checked={currentRow.recurring} onChange={(event) => updateCurrentRow({ recurring: event.target.checked })} /> Recorrente</label>
-            </div>
-            {error && <div className="alert alert-error"><span>{error}</span></div>}
-            <div className="flex flex-col-reverse gap-3 border-t border-base-200 pt-4 sm:flex-row sm:justify-between">
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button type="button" className="btn btn-soft btn-secondary" onClick={reset} disabled={isLoading}>Cancelar</button>
-                {currentIndex > 0 && (
-                  <button type="button" className="btn btn-soft btn-secondary gap-2" onClick={handlePreviousRow} disabled={isLoading}>
-                    <span className="icon-[tabler--arrow-left] size-4" aria-hidden="true" />
-                    Despesa anterior
-                  </button>
-                )}
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field>
+                  <FieldLabel htmlFor="import-area">Categoria de area</FieldLabel>
+                  <NativeSelect id="import-area" className="w-full" value={currentRow.areaCategoryId} onChange={(event) => updateCurrentAreaCategory(event.target.value)}>
+                    <NativeSelectOption value="">Selecione</NativeSelectOption>
+                    {options.areaCategories.map((category) => <NativeSelectOption key={category.id} value={category.id}>{category.name}</NativeSelectOption>)}
+                  </NativeSelect>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="import-subcategory">Subcategoria</FieldLabel>
+                  <NativeSelect id="import-subcategory" className="w-full" value={currentRow.areaSubcategoryId} disabled={!currentRow.areaCategoryId} onChange={(event) => updateCurrentRow({ areaSubcategoryId: event.target.value })}>
+                    <NativeSelectOption value="">Selecione</NativeSelectOption>
+                    {selectedSubcategories.map((subcategory) => <NativeSelectOption key={subcategory.id} value={subcategory.id}>{subcategory.name}</NativeSelectOption>)}
+                  </NativeSelect>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="import-profile">Categoria de perfil</FieldLabel>
+                  <NativeSelect id="import-profile" className="w-full" value={currentRow.profileCategoryId} onChange={(event) => updateCurrentRow({ profileCategoryId: event.target.value })}>
+                    <NativeSelectOption value="">Selecione</NativeSelectOption>
+                    {options.profileCategories.map((category) => <NativeSelectOption key={category.id} value={category.id}>{category.name}</NativeSelectOption>)}
+                  </NativeSelect>
+                </Field>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button type="button" className="btn btn-soft btn-secondary" onClick={handleSkipRow} disabled={isLoading}>Pular linha</button>
-                <button type="button" className="btn btn-primary gap-2" onClick={handleConfirmRow} disabled={isLoading}>
-                  {isLoading ? <span className="loading loading-spinner loading-xs" aria-hidden="true" /> : <span className="icon-[tabler--check] size-4" aria-hidden="true" />}
-                  {currentIndex === rows.length - 1 ? "Confirmar e salvar" : "Confirmar e proxima"}
-                </button>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldTitle>Responsavel</FieldTitle>
+                  <div className="flex h-8 items-center rounded-lg border bg-muted/50 px-2.5 text-sm text-muted-foreground">
+                    {options.members.find((member) => member.id === responsibleUserId)?.name ?? "Responsavel selecionado"}
+                  </div>
+                  <FieldDescription>Definido para todo o arquivo.</FieldDescription>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="import-notes">Observacoes</FieldLabel>
+                  <Input id="import-notes" value={currentRow.notes} onChange={(event) => updateCurrentRow({ notes: event.target.value })} placeholder="Opcional" />
+                </Field>
               </div>
-            </div>
-          </div>
-        </div>
+              {visibleDuplicates.length > 0 && (
+                <Alert>
+                  <CopyIcon aria-hidden="true" />
+                  <AlertTitle>Possivel duplicidade</AlertTitle>
+                  <AlertDescription>
+                    <p>Ja existe um lancamento com a mesma descricao, valor e data ou fingerprint.</p>
+                    {visibleDuplicates.map((duplicate) => (
+                      <p key={duplicate.id} className="mt-2 text-xs">{duplicate.description} · {formatCurrency(duplicate.amount)} · {formatDate(duplicate.statementDate)}{duplicate.fileName ? ` · ${duplicate.fileName}` : ""}</p>
+                    ))}
+                    <div className="mt-3 flex items-center gap-2 text-sm">
+                      <Checkbox id="import-allow-duplicate" checked={currentRow.allowDuplicateImport} onCheckedChange={(checked) => updateCurrentRow({ allowDuplicateImport: checked === true })} />
+                      <Label htmlFor="import-allow-duplicate">Importar mesmo assim</Label>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              {visibleDuplicateError && <p className="text-sm text-destructive">{visibleDuplicateError}</p>}
+              <div className="flex flex-wrap gap-4">
+                <Field orientation="horizontal" className="w-auto">
+                  <Checkbox id="import-shared" checked={currentRow.shared} onCheckedChange={(checked) => updateCurrentRow({ shared: checked === true })} />
+                  <FieldLabel htmlFor="import-shared">Compartilhada</FieldLabel>
+                </Field>
+                <Field orientation="horizontal" className="w-auto">
+                  <Checkbox id="import-recurring" checked={currentRow.recurring} onCheckedChange={(checked) => updateCurrentRow({ recurring: checked === true })} />
+                  <FieldLabel htmlFor="import-recurring">Recorrente</FieldLabel>
+                </Field>
+              </div>
+              {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+              <div className="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button type="button" variant="secondary" onClick={reset} disabled={isLoading}>Cancelar</Button>
+                  <Button type="button" variant="secondary" onClick={handleSkipRow} disabled={isLoading}>Pular linha</Button>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  {currentIndex > 0 && (
+                    <Button type="button" variant="secondary" onClick={handlePreviousRow} disabled={isLoading}>
+                      <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
+                      Despesa anterior
+                    </Button>
+                  )}
+                  <Button type="button" onClick={handleConfirmRow} disabled={isLoading}>
+                    {isLoading ? <Spinner data-icon="inline-start" /> : <CheckIcon data-icon="inline-start" aria-hidden="true" />}
+                    {currentIndex === rows.length - 1 ? "Confirmar e salvar" : "Confirmar e proxima"}
+                  </Button>
+                </div>
+              </div>
+            </FieldGroup>
+          </CardContent>
+        </Card>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto w-full max-w-5xl space-y-8">
-      <header className="space-y-2">
-        <span className="badge badge-soft badge-primary">Importacao</span>
-        <h1 className="text-3xl font-semibold tracking-tight text-base-content sm:text-4xl">Importar fatura ou extrato</h1>
-        <p className="max-w-2xl text-base text-base-content/60">Leia um arquivo CSV, revise as classificacoes sugeridas e registre as despesas no household {householdName}.</p>
+    <section className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+      <header className="flex flex-col items-start gap-2">
+        <Badge variant="secondary">Importacao</Badge>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Importar fatura ou extrato</h1>
+        <p className="max-w-2xl text-base text-muted-foreground">Leia um arquivo CSV, revise as classificacoes sugeridas e registre as despesas no household {householdName}.</p>
       </header>
-      <div className="card bg-base-100 shadow-md">
-        <div className="card-body gap-6">
-          <div>
-            <h2 className="card-title text-xl">Configurar arquivo</h2>
-            <p className="text-sm text-base-content/60">Formatos suportados: XP, BTG e Banco do Brasil.</p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {(Object.keys(sourceLabels) as ImportSource[]).map((item) => (
-              <button key={item} type="button" className={`btn ${source === item ? "btn-primary" : "btn-soft btn-secondary"} min-h-14 justify-start gap-3`} onClick={() => setSource(item)}>
-                <span className="icon-[tabler--building-bank] size-5" aria-hidden="true" />
-                <span className="text-left"><span className="block font-semibold">{sourceLabels[item]}</span><span className="block text-xs opacity-70">{item === "BB" ? "Extrato bancario" : "Fatura de cartao"}</span></span>
-              </button>
-            ))}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="form-control w-full">
-              <span className="label-text mb-1 font-medium">{source === "BB" ? "Data de referencia (opcional)" : "Competencia da fatura"}</span>
-              <input type="date" className="input input-bordered w-full" value={statementDate} onChange={(event) => setStatementDate(event.target.value)} disabled={!source || source === "BB"} />
-              <span className="label-text-alt mt-1 text-base-content/50">{source === "BB" ? "As datas serao lidas de cada lancamento." : "Essa data sera usada como competencia mensal."}</span>
-            </label>
-            <label className="form-control w-full">
-              <span className="label-text mb-1 font-medium">Responsavel deste arquivo</span>
-              <select className="select select-bordered w-full" value={responsibleUserId} onChange={(event) => setResponsibleUserId(event.target.value)}>
-                <option value="">Selecione</option>
-                {options.members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
-              </select>
-              <span className="label-text-alt mt-1 text-base-content/50">O mesmo responsavel sera sugerido para todas as linhas.</span>
-            </label>
-          </div>
-          <label className="form-control w-full">
-            <span className="label-text mb-1 font-medium">Arquivo CSV</span>
-            <input type="file" accept=".csv,text/csv" className="file-input file-input-bordered w-full" onChange={handleFileChange} />
-            {fileName && <span className="label-text-alt mt-1 text-success">{fileName} carregado{detectedSource ? ` · formato detectado: ${sourceLabels[detectedSource]}` : ""}</span>}
-          </label>
-          <div className="rounded-box border border-base-300 bg-base-200/40 p-4 text-sm text-base-content/70">
-            <div className="flex items-start gap-3"><span className="icon-[tabler--shield-check] mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" /><p>A importacao nao grava nada nesta etapa. Cada linha sera revisada, categorizada e confirmada antes do salvamento.</p></div>
-          </div>
-          {error && <div className="alert alert-error"><span>{error}</span></div>}
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <a href="/despesas" className="btn btn-soft btn-secondary">Cancelar</a>
-            <button type="button" className="btn btn-primary gap-2" onClick={handleStartReview} disabled={isLoading}>
-              {isLoading ? <span className="loading loading-spinner loading-xs" aria-hidden="true" /> : <span className="icon-[tabler--file-search] size-4" aria-hidden="true" />}
-              {isLoading ? "Lendo arquivo..." : "Ler e revisar"}
-            </button>
-          </div>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Configurar arquivo</CardTitle>
+          <CardDescription>Formatos suportados: XP, BTG e Banco do Brasil.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {(Object.keys(sourceLabels) as ImportSource[]).map((item) => (
+                <Button key={item} type="button" variant={source === item ? "default" : "secondary"} className="h-14 justify-start gap-3" onClick={() => setSource(item)}>
+                  <LandmarkIcon aria-hidden="true" />
+                  <span className="text-left"><span className="block font-semibold">{sourceLabels[item]}</span><span className="block text-xs opacity-70">{item === "BB" ? "Extrato bancario" : "Fatura de cartao"}</span></span>
+                </Button>
+              ))}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="import-statement-date">{source === "BB" ? "Data de referencia (opcional)" : "Competencia da fatura"}</FieldLabel>
+                <Input id="import-statement-date" type="date" value={statementDate} onChange={(event) => setStatementDate(event.target.value)} disabled={!source || source === "BB"} />
+                <FieldDescription>{source === "BB" ? "As datas serao lidas de cada lancamento." : "Essa data sera usada como competencia mensal."}</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="import-responsible">Responsavel deste arquivo</FieldLabel>
+                <NativeSelect id="import-responsible" className="w-full" value={responsibleUserId} onChange={(event) => setResponsibleUserId(event.target.value)}>
+                  <NativeSelectOption value="">Selecione</NativeSelectOption>
+                  {options.members.map((member) => <NativeSelectOption key={member.id} value={member.id}>{member.name}</NativeSelectOption>)}
+                </NativeSelect>
+                <FieldDescription>O mesmo responsavel sera sugerido para todas as linhas.</FieldDescription>
+              </Field>
+            </div>
+            <Field>
+              <FieldLabel htmlFor="import-file">Arquivo CSV</FieldLabel>
+              <Input id="import-file" type="file" accept=".csv,text/csv" onChange={handleFileChange} />
+              {fileName && <FieldDescription>{fileName} carregado{detectedSource ? ` · formato detectado: ${sourceLabels[detectedSource]}` : ""}</FieldDescription>}
+            </Field>
+            <Alert>
+              <ShieldCheckIcon aria-hidden="true" />
+              <AlertDescription>A importacao nao grava nada nesta etapa. Cada linha sera revisada, categorizada e confirmada antes do salvamento.</AlertDescription>
+            </Alert>
+            {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <a href="/despesas" className={buttonVariants({ variant: "secondary" })}>Cancelar</a>
+              <Button type="button" onClick={handleStartReview} disabled={isLoading}>
+                {isLoading ? <Spinner data-icon="inline-start" /> : <FileSearchIcon data-icon="inline-start" aria-hidden="true" />}
+                {isLoading ? "Lendo arquivo..." : "Ler e revisar"}
+              </Button>
+            </div>
+          </FieldGroup>
+        </CardContent>
+      </Card>
     </section>
+  );
+}
+
+function ResultStat({ title, value }: { title: string; value: number }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-lg bg-muted px-4 py-3">
+      <span className="text-sm text-muted-foreground">{title}</span>
+      <span className="text-2xl font-semibold">{value}</span>
+    </div>
   );
 }

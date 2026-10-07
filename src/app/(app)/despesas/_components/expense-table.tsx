@@ -1,8 +1,14 @@
-import { Fragment } from "react";
+import { PencilIcon, PlusIcon, ReceiptTextIcon } from "lucide-react";
 import Link from "next/link";
+import { Fragment } from "react";
 
 import { DeleteExpenseButton } from "@/src/app/(app)/despesas/_components/delete-expense-button";
 import type { ExpenseListItem } from "@/src/app/(app)/despesas/_lib/types";
+import { Badge } from "@/src/components/ui/badge";
+import { buttonVariants } from "@/src/components/ui/button";
+import { Card, CardContent } from "@/src/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/src/components/ui/empty";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 
 type ExpenseTableProps = {
     expenses: ExpenseListItem[];
@@ -55,153 +61,145 @@ function groupExpenses(expenses: ExpenseListItem[]) {
 export function ExpenseTable({ expenses }: ExpenseTableProps) {
     if (expenses.length === 0) {
         return (
-            <div className="card bg-base-100 shadow-md">
-                <div className="card-body min-h-72 items-center justify-center gap-3 px-6 text-center">
-                    <span className="icon-[tabler--receipt-off] size-11 text-primary/60" aria-hidden="true" />
-                    <div className="space-y-1">
-                        <h2 className="font-semibold text-base-content">Nenhuma despesa neste mês</h2>
-                        <p className="text-sm text-base-content/60">
-                            Registre o primeiro lançamento para começar a acompanhar esta competência.
-                        </p>
-                    </div>
-                    <Link href="/despesas/nova" className="btn btn-primary btn-sm mt-2 gap-2">
-                        <span className="icon-[tabler--plus] size-4" aria-hidden="true" />
-                        Nova despesa
-                    </Link>
-                </div>
-            </div>
+            <Card>
+                <CardContent>
+                    <Empty className="min-h-72">
+                        <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                                <ReceiptTextIcon aria-hidden="true" />
+                            </EmptyMedia>
+                            <EmptyTitle>Nenhuma despesa neste mês</EmptyTitle>
+                            <EmptyDescription>
+                                Registre o primeiro lançamento para começar a acompanhar esta competência.
+                            </EmptyDescription>
+                        </EmptyHeader>
+                        <Link href="/despesas/nova" className={buttonVariants({ size: "sm" })}>
+                            <PlusIcon data-icon="inline-start" aria-hidden="true" />
+                            Nova despesa
+                        </Link>
+                    </Empty>
+                </CardContent>
+            </Card>
         );
     }
 
     const groups = groupExpenses(expenses);
 
     return (
-        <div className="card bg-base-100 shadow-md">
-            <div className="card-body overflow-hidden p-0">
-                <div className="overflow-x-auto">
-                    <table className="table min-w-215">
-                        <thead>
-                            <tr className="text-xs uppercase tracking-[0.08em] text-base-content/50">
-                                <th>Data</th>
-                                <th>Descrição</th>
-                                <th>Perfil</th>
-                                <th>Responsável</th>
-                                <th className="text-right">Valor</th>
-                                <th className="w-24 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Array.from(groups.entries()).map(([areaId, area]) => {
-                                const areaTotal = Array.from(area.subcategories.values()).reduce(
-                                    (total, subcategory) =>
-                                        total + subcategory.expenses.reduce((sum, expense) => sum + Number(expense.amount), 0),
-                                    0,
-                                );
+        <Card>
+            <CardContent className="overflow-hidden p-0">
+                <Table className="min-w-215">
+                    <TableHeader>
+                        <TableRow className="text-xs uppercase tracking-[0.08em]">
+                            <TableHead>Data</TableHead>
+                            <TableHead>Descrição</TableHead>
+                            <TableHead>Perfil</TableHead>
+                            <TableHead>Responsável</TableHead>
+                            <TableHead className="text-right">Valor</TableHead>
+                            <TableHead className="w-24 text-right">Ações</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Array.from(groups.entries()).map(([areaId, area]) => {
+                            const areaTotal = Array.from(area.subcategories.values()).reduce(
+                                (total, subcategory) =>
+                                    total + subcategory.expenses.reduce((sum, expense) => sum + Number(expense.amount), 0),
+                                0,
+                            );
 
-                                return (
-                                    <Fragment key={areaId}>
-                                        <tr className="bg-base-200/60">
-                                            <th colSpan={4} className="text-sm font-semibold text-base-content">
-                                                <span
-                                                    className="me-2 inline-block size-2 rounded-full align-middle"
-                                                    style={{ backgroundColor: area.color }}
-                                                    aria-hidden="true"
-                                                />
-                                                {area.name}
-                                            </th>
-                                            <th className="text-right text-sm font-semibold text-base-content">
-                                                {formatCurrency(areaTotal.toFixed(2))}
-                                            </th>
-                                            <th />
-                                        </tr>
-                                        {Array.from(area.subcategories.entries()).map(([subcategoryId, subcategory]) => {
-                                            const subcategoryTotal = subcategory.expenses.reduce(
-                                                (sum, expense) => sum + Number(expense.amount),
-                                                0,
-                                            );
+                            return (
+                                <Fragment key={areaId}>
+                                    <TableRow className="bg-muted/60 hover:bg-muted/60">
+                                        <TableHead colSpan={4} className="text-sm font-semibold text-foreground">
+                                            <span
+                                                className="me-2 inline-block size-2 rounded-full align-middle"
+                                                style={{ backgroundColor: area.color }}
+                                                aria-hidden="true"
+                                            />
+                                            {area.name}
+                                        </TableHead>
+                                        <TableHead className="text-right text-sm font-semibold text-foreground">
+                                            {formatCurrency(areaTotal.toFixed(2))}
+                                        </TableHead>
+                                        <TableHead />
+                                    </TableRow>
+                                    {Array.from(area.subcategories.entries()).map(([subcategoryId, subcategory]) => {
+                                        const subcategoryTotal = subcategory.expenses.reduce(
+                                            (sum, expense) => sum + Number(expense.amount),
+                                            0,
+                                        );
 
-                                            return (
-                                                <Fragment key={subcategoryId}>
-                                                    <tr key={`${subcategoryId}-header`} className="bg-base-200/30">
-                                                        <th colSpan={4} className="py-2 text-xs font-semibold text-base-content/60">
-                                                            <span className="ms-2">{subcategory.name}</span>
-                                                        </th>
-                                                        <th className="py-2 text-right text-xs font-semibold text-base-content/60">
-                                                            {formatCurrency(subcategoryTotal.toFixed(2))}
-                                                        </th>
-                                                        <th />
-                                                    </tr>
-                                                    {subcategory.expenses.map((expense) => (
-                                                        <tr key={expense.id}>
-                                                            <td className="whitespace-nowrap text-sm text-base-content/65">
-                                                                {formatDate(expense.date)}
-                                                            </td>
-                                                            <td>
-                                                                <div className="flex min-w-52 flex-col gap-1">
-                                                                    <span className="font-medium text-base-content">
-                                                                        {expense.description}
-                                                                    </span>
-                                                                    <span className="flex flex-wrap gap-1">
-                                                                        {expense.importSource && (
-                                                                            <span className="badge badge-soft badge-info badge-xs">
-                                                                                Importada {expense.importSource}
-                                                                            </span>
-                                                                        )}
-                                                                        {expense.shared && (
-                                                                            <span className="badge badge-soft badge-primary badge-xs">
-                                                                                Compartilhada
-                                                                            </span>
-                                                                        )}
-                                                                        {expense.recurring && (
-                                                                            <span className="badge badge-soft badge-secondary badge-xs">
-                                                                                Recorrente
-                                                                            </span>
-                                                                        )}
-                                                                    </span>
-                                                                    {expense.creditCardTransactionDate && (
-                                                                        <span className="text-xs text-base-content/50">
-                                                                            Compra em {formatDate(expense.creditCardTransactionDate)}
-                                                                        </span>
+                                        return (
+                                            <Fragment key={subcategoryId}>
+                                                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                                                    <TableHead colSpan={4} className="text-xs font-semibold text-muted-foreground">
+                                                        <span className="ms-2">{subcategory.name}</span>
+                                                    </TableHead>
+                                                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                                                        {formatCurrency(subcategoryTotal.toFixed(2))}
+                                                    </TableHead>
+                                                    <TableHead />
+                                                </TableRow>
+                                                {subcategory.expenses.map((expense) => (
+                                                    <TableRow key={expense.id}>
+                                                        <TableCell className="text-sm text-muted-foreground">
+                                                            {formatDate(expense.date)}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex min-w-52 flex-col gap-1">
+                                                                <span className="font-medium text-foreground">
+                                                                    {expense.description}
+                                                                </span>
+                                                                <span className="flex flex-wrap gap-1">
+                                                                    {expense.importSource && (
+                                                                        <Badge variant="outline">Importada {expense.importSource}</Badge>
                                                                     )}
-                                                                </div>
-                                                            </td>
-                                                            <td className="text-sm text-base-content/65">
-                                                                {expense.profileCategory.name}
-                                                            </td>
-                                                            <td className="text-sm text-base-content/65">
-                                                                {expense.responsibleUser.name}
-                                                            </td>
-                                                            <td className="whitespace-nowrap text-right font-semibold text-base-content">
-                                                                {formatCurrency(expense.amount)}
-                                                            </td>
-                                                            <td>
-                                                                <div className="flex justify-end gap-1">
-                                                                    <Link
-                                                                        href={`/despesas/${expense.id}/editar`}
-                                                                        className="btn btn-soft btn-secondary btn-square btn-sm"
-                                                                        aria-label={`Editar ${expense.description}`}
-                                                                        title="Editar despesa"
-                                                                    >
-                                                                        <span className="icon-[tabler--pencil] size-4" aria-hidden="true" />
-                                                                    </Link>
-                                                                    <DeleteExpenseButton
-                                                                        expenseId={expense.id}
-                                                                        description={expense.description}
-                                                                    />
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </Fragment>
-                                            );
-                                        })}
-                                    </Fragment>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+                                                                    {expense.shared && <Badge variant="secondary">Compartilhada</Badge>}
+                                                                    {expense.recurring && <Badge variant="outline">Recorrente</Badge>}
+                                                                </span>
+                                                                {expense.creditCardTransactionDate && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        Compra em {formatDate(expense.creditCardTransactionDate)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">
+                                                            {expense.profileCategory.name}
+                                                        </TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">
+                                                            {expense.responsibleUser.name}
+                                                        </TableCell>
+                                                        <TableCell className="text-right font-semibold text-foreground">
+                                                            {formatCurrency(expense.amount)}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex justify-end gap-1">
+                                                                <Link
+                                                                    href={`/despesas/${expense.id}/editar`}
+                                                                    className={buttonVariants({ variant: "secondary", size: "icon-sm" })}
+                                                                    aria-label={`Editar ${expense.description}`}
+                                                                    title="Editar despesa"
+                                                                >
+                                                                    <PencilIcon aria-hidden="true" />
+                                                                </Link>
+                                                                <DeleteExpenseButton
+                                                                    expenseId={expense.id}
+                                                                    description={expense.description}
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </Fragment>
+                                        );
+                                    })}
+                                </Fragment>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
     );
 }

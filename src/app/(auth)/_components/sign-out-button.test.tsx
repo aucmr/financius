@@ -25,8 +25,7 @@ describe("SignOutButton", () => {
         const link = screen.getByRole("link", { name: "Sair" });
 
         expect(link).toHaveAttribute("href", "/");
-        expect(link).toHaveClass("min-h-10", "w-full", "rounded-field", "px-3", "text-sm");
-        expect(link).not.toHaveClass("btn", "btn-primary", "btn-ghost");
+        expect(link).toHaveClass("h-10", "w-full", "px-3", "text-sm");
         expect(screen.getByText("Sair")).toBeVisible();
 
         fireEvent.click(link);

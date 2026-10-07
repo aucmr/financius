@@ -1,9 +1,11 @@
+import { WalletIcon } from "lucide-react";
+
 import { FinancialSectionPage } from "@/src/app/(app)/_components/financial-section-page";
 
 export default function ReceitasPage() {
     return (
         <FinancialSectionPage
-            icon="icon-[tabler--wallet]"
+            icon={WalletIcon}
             label="Receitas"
             title="Receitas do casal"
             description="Organize as entradas que compõem o planejamento financeiro de vocês."

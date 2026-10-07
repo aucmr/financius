@@ -11,15 +11,13 @@ export function FinanciusLogo({ collapsed = false }: FinanciusLogoProps) {
         <Link
             href="/dashboard"
             className={cn(
-                "flex min-w-0 items-center gap-3 text-base-content",
+                "flex min-w-0 items-center gap-3 text-foreground",
                 collapsed && "sm:justify-center",
             )}
             aria-label="Financius - Dashboard"
         >
-            <span className="avatar avatar-placeholder shrink-0">
-                <span className="size-9 rounded-field bg-primary text-base font-semibold text-primary-content shadow-sm">
-                    F
-                </span>
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground">
+                F
             </span>
             <span
                 className={cn(

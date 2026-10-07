@@ -1,5 +1,11 @@
+import { ChartPieIcon, CalendarDaysIcon, InfoIcon, ScaleIcon, SparklesIcon } from "lucide-react";
+
 import { getDashboardOverview } from "@/src/app/(app)/dashboard/actions";
 import type { DashboardMetric } from "@/src/app/(app)/dashboard/types";
+import { Alert, AlertDescription, AlertTitle } from "@/src/components/ui/alert";
+import { Badge } from "@/src/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/src/components/ui/empty";
 
 type DashboardOverviewProps = {
     userName: string | null;
@@ -21,35 +27,35 @@ function getGreetingName(userName: string | null) {
 }
 
 function MetricStat({ metric }: { metric: DashboardMetric }) {
+    const Icon = metric.icon;
+
     return (
-        <div className="stat min-w-0 border-b-0 lg:border-e-0">
-            <div className="stat-figure">
-                <span className="inline-flex size-8 items-center justify-center rounded-field bg-primary/10 text-primary">
-                    <span className={`${metric.icon} size-5`} aria-hidden="true" />
-                </span>
-            </div>
-            <div className="stat-title text-sm leading-tight">{metric.label}</div>
-            <div className="stat-value text-2xl sm:text-3xl">{formatCurrency(metric.value)}</div>
-            <div className="stat-desc text-xs leading-tight">{metric.description}</div>
-        </div>
+        <Card size="sm" className="min-w-0">
+            <CardHeader>
+                <CardDescription>{metric.label}</CardDescription>
+                <CardTitle className="text-2xl sm:text-3xl">{formatCurrency(metric.value)}</CardTitle>
+                <div className="col-start-2 row-span-2 row-start-1 self-start justify-self-end text-muted-foreground">
+                    <Icon aria-hidden="true" />
+                </div>
+                <CardDescription className="text-xs">{metric.description}</CardDescription>
+            </CardHeader>
+        </Card>
     );
 }
 
 function EmptyChart() {
     return (
-        <div
-            className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-box bg-base-200/70 px-6 text-center"
-            role="img"
-            aria-label="Gráfico mensal sem dados"
-        >
-            <span className="icon-[tabler--chart-donut-4] size-10 text-primary/70" aria-hidden="true" />
-            <div className="max-w-sm space-y-1">
-                <p className="font-semibold text-base-content">O gráfico começa com o primeiro lançamento</p>
-                <p className="text-sm text-base-content/60">
+        <Empty className="min-h-64 bg-muted/50" role="img" aria-label="Gráfico mensal sem dados">
+            <EmptyHeader>
+                <EmptyMedia variant="icon">
+                    <ChartPieIcon aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>O gráfico começa com o primeiro lançamento</EmptyTitle>
+                <EmptyDescription>
                     Registre receitas e despesas para acompanhar o fluxo financeiro do mês.
-                </p>
-            </div>
-        </div>
+                </EmptyDescription>
+            </EmptyHeader>
+        </Empty>
     );
 }
 
@@ -57,73 +63,67 @@ export async function DashboardOverview({ userName }: DashboardOverviewProps) {
     const overview = await getDashboardOverview();
 
     return (
-        <section className="mx-auto w-full max-w-7xl space-y-8">
+        <section className="mx-auto flex w-full max-w-7xl flex-col gap-8">
             <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                <div className="space-y-2">
-                    <span className="badge badge-soft badge-primary">Visão mensal</span>
-                    <h1 className="text-3xl font-semibold tracking-tight text-base-content sm:text-4xl">
+                <div className="flex flex-col items-start gap-2">
+                    <Badge variant="secondary">Visão mensal</Badge>
+                    <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                         Olá, {getGreetingName(userName)}
                     </h1>
-                    <p className="max-w-2xl text-base text-base-content/60">
+                    <p className="max-w-2xl text-base text-muted-foreground">
                         Uma visão simples do que entrou, saiu e foi compartilhado neste mês.
                     </p>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-base-content/60">
-                    <span className="icon-[tabler--calendar-month] size-5" aria-hidden="true" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CalendarDaysIcon className="size-5" aria-hidden="true" />
                     <span>{overview.periodLabel}</span>
                 </div>
             </header>
 
-            <div className="alert alert-soft alert-info items-start">
-                <span className="icon-[tabler--info-circle] mt-0.5 size-5 shrink-0" aria-hidden="true" />
-                <div>
-                    <h2 className="font-semibold">Seu espaço financeiro está pronto</h2>
-                    <p className="text-sm">
-                        Os indicadores serão preenchidos quando os primeiros lançamentos forem registrados.
-                    </p>
-                </div>
-            </div>
+            <Alert>
+                <InfoIcon aria-hidden="true" />
+                <AlertTitle>Seu espaço financeiro está pronto</AlertTitle>
+                <AlertDescription>
+                    Os indicadores serão preenchidos quando os primeiros lançamentos forem registrados.
+                </AlertDescription>
+            </Alert>
 
-            <div className="stats stats-vertical w-full overflow-hidden bg-base-100 shadow-md lg:stats-horizontal">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {overview.metrics.map((metric) => (
                     <MetricStat key={metric.id} metric={metric} />
                 ))}
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
-                <section className="card bg-base-100 shadow-md">
-                    <div className="card-body gap-6">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                                <h2 className="card-title text-xl">Fluxo do mês</h2>
-                                <p className="text-sm text-base-content/60">
-                                    Compare receitas e despesas ao longo da competência.
-                                </p>
-                            </div>
-                            <span className="badge badge-outline">Sem dados</span>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-xl">Fluxo do mês</CardTitle>
+                        <CardDescription>Compare receitas e despesas ao longo da competência.</CardDescription>
+                        <div className="col-start-2 row-span-2 row-start-1 self-start justify-self-end">
+                            <Badge variant="outline">Sem dados</Badge>
                         </div>
-                        {overview.chartStatus === "empty" && <EmptyChart />}
-                    </div>
-                </section>
+                    </CardHeader>
+                    <CardContent>{overview.chartStatus === "empty" && <EmptyChart />}</CardContent>
+                </Card>
 
-                <section className="card bg-base-100 shadow-md">
-                    <div className="card-body gap-5">
-                        <div>
-                            <h2 className="card-title text-xl">Divisão do casal</h2>
-                            <p className="text-sm text-base-content/60">
-                                A divisão mensal aparece aqui depois que houver despesas compartilhadas.
-                            </p>
-                        </div>
-                        <div className="alert alert-soft alert-warning items-start">
-                            <span className="icon-[tabler--scale] mt-0.5 size-5 shrink-0" aria-hidden="true" />
-                            <p className="text-sm">Ainda não há despesas compartilhadas para calcular.</p>
-                        </div>
-                        <div className="flex items-center gap-3 rounded-box bg-base-200 p-4 text-sm text-base-content/70">
-                            <span className="icon-[tabler--sparkles] size-5 shrink-0 text-secondary" aria-hidden="true" />
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-xl">Divisão do casal</CardTitle>
+                        <CardDescription>
+                            A divisão mensal aparece aqui depois que houver despesas compartilhadas.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4">
+                        <Alert>
+                            <ScaleIcon aria-hidden="true" />
+                            <AlertDescription>Ainda não há despesas compartilhadas para calcular.</AlertDescription>
+                        </Alert>
+                        <div className="flex items-center gap-3 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
+                            <SparklesIcon className="size-5 shrink-0" aria-hidden="true" />
                             <span>Vocês poderão escolher a regra de divisão que faz sentido para o casal.</span>
                         </div>
-                    </div>
-                </section>
+                    </CardContent>
+                </Card>
             </div>
         </section>
     );

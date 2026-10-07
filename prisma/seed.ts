@@ -65,7 +65,7 @@ async function seedCategories() {
         kind: CategoryKind.AREA,
         type: TransactionType.EXPENSE,
         color: "#0f766e",
-        icon: "icon-[tabler--category]",
+        icon: "shapes",
       },
     });
 
@@ -95,7 +95,7 @@ async function seedCategories() {
         kind: CategoryKind.PROFILE,
         type: TransactionType.EXPENSE,
         color: "#b45309",
-        icon: "icon-[tabler--adjustments-horizontal]",
+        icon: "sliders-horizontal",
       },
     });
   }

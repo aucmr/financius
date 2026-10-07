@@ -60,20 +60,13 @@ describe("ExpenseMonthPage", () => {
     it("uses a responsive stats surface and keeps header controls outside it", () => {
         render(<ExpenseMonthPage data={baseData} />);
 
-        const stats = document.querySelector(".stats");
+        const stats = screen.getByText("Total do mês").closest('[data-slot="card"]')?.parentElement;
 
-        expect(stats).toHaveClass(
-            "stats-vertical",
-            "w-full",
-            "bg-base-100",
-            "shadow-md",
-            "lg:stats-horizontal",
-        );
-        expect(stats).not.toHaveClass("grid");
+        expect(stats).toHaveClass("grid", "sm:grid-cols-3");
         expect(screen.getByText("Total do mês")).toBeInTheDocument();
         expect(screen.getByText("Compartilhadas")).toBeInTheDocument();
         expect(stats).toHaveTextContent("Lançamentos");
-        expect(screen.getByTestId("month-navigation").closest(".stats")).toBeNull();
+        expect(screen.getByTestId("month-navigation").closest('.grid.sm\\:grid-cols-3')).toBeNull();
         expect(screen.getByRole("link", { name: "Nova despesa" })).toBeInTheDocument();
     });
 
@@ -88,9 +81,9 @@ describe("ExpenseMonthPage", () => {
             />,
         );
 
-        const callout = screen.getByRole("heading", { name: "Complete o household" }).closest("section");
+        const callout = screen.getByTestId("household-callout");
 
-        expect(callout).toHaveClass("card", "border-dashed");
+        expect(callout).toHaveClass("border-dashed");
         expect(screen.getByTestId("household-member-form")).toBeInTheDocument();
     });
 });

@@ -1,10 +1,12 @@
 "use client";
 
+import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { deleteExpenseAction } from "@/src/app/(app)/despesas/actions";
-import { getNotyf } from "@/src/lib/utils/notyf";
+import { Button } from "@/src/components/ui/button";
 
 type DeleteExpenseButtonProps = {
     expenseId: string;
@@ -24,25 +26,26 @@ export function DeleteExpenseButton({ expenseId, description }: DeleteExpenseBut
         const result = await deleteExpenseAction(expenseId);
 
         if (!result.ok) {
-            getNotyf()?.error(result.message);
+            toast.error(result.message);
             setIsDeleting(false);
             return;
         }
 
-        getNotyf()?.success(result.message);
+        toast.success(result.message);
         router.refresh();
     }
 
     return (
-        <button
+        <Button
             type="button"
-            className="btn btn-soft btn-error btn-square btn-sm"
+            variant="destructive"
+            size="icon-sm"
             onClick={handleDelete}
             disabled={isDeleting}
             aria-label={`Excluir ${description}`}
             title="Excluir despesa"
         >
-            <span className="icon-[tabler--trash] size-4" aria-hidden="true" />
-        </button>
+            <Trash2Icon aria-hidden="true" />
+        </Button>
     );
 }

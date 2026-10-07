@@ -1,6 +1,6 @@
 ---
-name: "Forms with FlyonUI, React Hook Form, and Zod"
-description: "Use when creating or modifying forms, Zod schemas, React Hook Form components, FlyonUI controls, validation feedback, or Server Actions."
+name: "Forms with shadcn, React Hook Form, and Zod"
+description: "Use when creating or modifying forms, Zod schemas, React Hook Form components, shadcn controls, validation feedback, or Server Actions."
 applyTo:
   - "src/app/**/_components/**/*form*.tsx"
   - "src/app/**/_lib/schemas.ts"
@@ -10,7 +10,7 @@ applyTo:
 # Form Patterns
 
 Use Zod as the single source of truth for form input, React Hook Form for
-client-side state and validation feedback, and FlyonUI classes for visual
+client-side state and validation feedback, and shadcn `Field` components for visual
 controls. Keep the schema in the feature `_lib/schemas.ts` file and export its
 inferred TypeScript type.
 
@@ -35,7 +35,7 @@ Use `.strict()` for application forms so server-only fields such as `userId`,
 `householdId`, timestamps, ownership and future-only fields are rejected when
 sent by the client.
 
-## React Hook Form with FlyonUI
+## React Hook Form with shadcn
 
 Forms that use React Hook Form must be Client Components. Connect the schema
 with `zodResolver`, pass server-provided values through `defaultValues`, and
@@ -45,7 +45,14 @@ render field errors near the corresponding control.
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+
+import { Button } from "@/src/components/ui/button";
+import { Checkbox } from "@/src/components/ui/checkbox";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/src/components/ui/field";
+import { Input } from "@/src/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/src/components/ui/native-select";
+import { Spinner } from "@/src/components/ui/spinner";
 
 import {
   profileFormSchema,
@@ -60,6 +67,7 @@ export function ProfileForm({
 }) {
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -79,57 +87,57 @@ export function ProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-      <label className="form-control w-full">
-        <span className="label-text mb-1 font-medium">Nome</span>
-        <input
-          type="text"
-          className="input input-bordered w-full"
-          {...register("name")}
-        />
-        {errors.name?.message && (
-          <span className="label-text-alt mt-1 text-error">
-            {errors.name.message}
-          </span>
-        )}
-      </label>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <FieldGroup>
+        <Field data-invalid={!!errors.name}>
+          <FieldLabel htmlFor="name">Nome</FieldLabel>
+          <Input id="name" aria-invalid={!!errors.name} {...register("name")} />
+          {errors.name?.message && <FieldError>{errors.name.message}</FieldError>}
+        </Field>
 
-      <label className="form-control w-full">
-        <span className="label-text mb-1 font-medium">Categoria</span>
-        <select
-          className="select select-bordered w-full"
-          {...register("category")}
-        >
-          <option value="personal">Pessoal</option>
-          <option value="business">Profissional</option>
-        </select>
-      </label>
+        <Field>
+          <FieldLabel htmlFor="category">Categoria</FieldLabel>
+          <NativeSelect id="category" className="w-full" {...register("category")}>
+            <NativeSelectOption value="personal">Pessoal</NativeSelectOption>
+            <NativeSelectOption value="business">Profissional</NativeSelectOption>
+          </NativeSelect>
+        </Field>
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-box border border-base-300 p-3">
-        <input
-          type="checkbox"
-          className="checkbox checkbox-primary"
-          {...register("active")}
-        />
-        <span className="font-medium">Perfil ativo</span>
-      </label>
+        <Field orientation="horizontal">
+          <Controller
+            control={control}
+            name="active"
+            render={({ field }) => (
+              <Checkbox
+                id="active"
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+              />
+            )}
+          />
+          <FieldLabel htmlFor="active">Perfil ativo</FieldLabel>
+        </Field>
 
-      <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-        {isSubmitting ? "Salvando..." : "Salvar"}
-      </button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Spinner data-icon="inline-start" />}
+          {isSubmitting ? "Salvando..." : "Salvar"}
+        </Button>
+      </FieldGroup>
     </form>
   );
 }
 ```
 
-Use these FlyonUI patterns consistently:
+Use these shadcn patterns consistently:
 
-- Text input: `form-control`, `label-text`, `input input-bordered w-full`.
-- Select: `select select-bordered w-full`.
-- Multiline input: `textarea textarea-bordered w-full`.
-- Boolean input: `checkbox checkbox-primary` or `checkbox checkbox-secondary`.
-- Submit action: `btn btn-primary`, disabled while `isSubmitting`.
-- Validation message: `label-text-alt text-error` below the control.
+- Layout: `FieldGroup` wrapping one `Field` per control; no `space-y-*` or raw `div` grids for the form itself.
+- Text input: `FieldLabel` + `Input` (use `InputGroup`/`InputGroupAddon` for prefixes such as "R$").
+- Select: `NativeSelect` with `NativeSelectOption`, compatible with `register`.
+- Multiline input: `Textarea`.
+- Boolean input: `Checkbox` driven by `Controller`.
+- Validation: `data-invalid` on `Field`, `aria-invalid` on the control, and `FieldError` / `FieldDescription` below it.
+- Submit action: default `Button`, disabled while `isSubmitting`, with `Spinner`.
+- Feedback: `toast.success` / `toast.error` from `sonner`.
 
 Do not register the same field as both a `select` and a `checkbox` in a real
 form. Use the control matching the schema field type. HTML select values are

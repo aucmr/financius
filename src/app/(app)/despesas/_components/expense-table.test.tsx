@@ -65,10 +65,10 @@ afterEach(() => {
 describe("ExpenseTable", () => {
     it("renders the empty state as a card body", () => {
         const { container } = render(<ExpenseTable expenses={[]} />);
-        const card = container.querySelector(".card");
+        const card = container.querySelector('[data-slot="card"]');
 
-        expect(card).toHaveClass("card", "bg-base-100", "shadow-md");
-        expect(card?.querySelector(".card-body")).toBeInTheDocument();
+        expect(card).toBeInTheDocument();
+        expect(card?.querySelector('[data-slot="card-content"]')).toBeInTheDocument();
         expect(screen.getByText("Nenhuma despesa neste mês")).toBeInTheDocument();
         expect(screen.getByRole("link", { name: "Nova despesa" })).toBeInTheDocument();
     });
@@ -77,12 +77,12 @@ describe("ExpenseTable", () => {
         const { container } = render(<ExpenseTable expenses={[expense]} />);
         const table = screen.getByRole("table");
         const tableSurface = table.parentElement;
-        const card = table.closest(".card");
+        const card = table.closest('[data-slot="card"]');
 
         expect(tableSurface).toHaveClass("overflow-x-auto");
-        expect(card).toHaveClass("card", "bg-base-100", "shadow-md");
-        expect(card?.querySelector(".card-body")).toHaveClass("overflow-hidden", "p-0");
-        expect(container.querySelectorAll(".card")).toHaveLength(1);
+        expect(card).toBeInTheDocument();
+        expect(card?.querySelector('[data-slot="card-content"]')).toHaveClass("overflow-hidden", "p-0");
+        expect(container.querySelectorAll('[data-slot="card"]')).toHaveLength(1);
         expect(screen.getByText("Casa")).toBeInTheDocument();
         expect(screen.getByText("Mercado")).toBeInTheDocument();
         expect(screen.getByRole("link", { name: "Editar Mercado da semana" })).toBeInTheDocument();

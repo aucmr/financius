@@ -3,6 +3,10 @@
 import { FinanciusLogo } from "@/src/app/(app)/_components/financius-logo";
 import { SidebarNav } from "@/src/app/(app)/_components/sidebar-nav";
 import { SignOutButton } from "@/src/app/(auth)/_components/sign-out-button";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+
+import { Avatar, AvatarFallback } from "@/src/components/ui/avatar";
+import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils/cn";
 
 export type SidebarUser = {
@@ -33,7 +37,7 @@ export function Sidebar({
         <aside
             id="financius-sidebar"
             className={cn(
-                "drawer drawer-start fixed inset-y-0 inset-s-0 z-50 flex w-72 max-w-[calc(100vw-2rem)] flex-col overflow-y-auto border-e border-base-content/20 bg-base-100 shadow-lg transition-transform duration-300 sm:static sm:z-auto sm:h-screen sm:max-w-none sm:translate-x-0 sm:shadow-none",
+                "fixed inset-y-0 start-0 z-50 flex w-72 max-w-[calc(100vw-2rem)] flex-col overflow-y-auto border-e bg-sidebar text-sidebar-foreground shadow-lg transition-transform duration-300 sm:static sm:z-auto sm:h-screen sm:max-w-none sm:translate-x-0 sm:shadow-none",
                 collapsed ? "sm:w-20" : "sm:w-72",
                 mobileOpen ? "translate-x-0" : "-translate-x-full",
             )}
@@ -41,55 +45,51 @@ export function Sidebar({
         >
             <div
                 className={cn(
-                    "drawer-header flex w-full items-center justify-between gap-3 px-5 py-4",
+                    "flex w-full items-center justify-between gap-3 px-5 py-4",
                     collapsed && "sm:gap-1 sm:justify-center sm:px-0",
                 )}
             >
                 <FinanciusLogo collapsed={collapsed} />
-                <button
+                <Button
                     type="button"
-                    className="btn btn-circle btn-text btn-sm hidden sm:inline-flex"
+                    variant="ghost"
+                    size="icon"
+                    className="hidden sm:inline-flex"
                     onClick={onToggleCollapsed}
                     aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
                     aria-expanded={!collapsed}
                     aria-controls="financius-sidebar"
                     title={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
                 >
-                    <span
-                        className={cn(
-                            collapsed
-                                ? "icon-[tabler--chevron-right]"
-                                : "icon-[tabler--chevron-left]",
-                            "size-5",
-                        )}
-                        aria-hidden="true"
-                    />
-                </button>
+                    {collapsed ? (
+                        <ChevronRightIcon aria-hidden="true" />
+                    ) : (
+                        <ChevronLeftIcon aria-hidden="true" />
+                    )}
+                </Button>
             </div>
 
-            <div className="drawer-body px-2 pt-4">
+            <div className="px-2 pt-4">
                 <SidebarNav collapsed={collapsed} onNavigate={onNavigate} />
             </div>
 
             <div className={cn("flex flex-col gap-4 p-4", collapsed && "sm:px-3")}>
-                <div className="border-t border-base-content/15 pt-4">
-                    <ul className="menu menu-sm w-full gap-1 p-0">
+                <div className="border-t pt-4">
+                    <ul className="flex w-full flex-col gap-1">
                         <li>
                             <SignOutButton collapsed={collapsed} />
                         </li>
                     </ul>
                 </div>
                 <div className={cn("flex items-center gap-3", collapsed && "sm:justify-center")}>
-                    <div className="avatar avatar-placeholder shrink-0">
-                        <div className="size-10 rounded-full bg-base-200 text-base-content">
-                            <span className="text-sm font-semibold">{getUserInitial(user)}</span>
-                        </div>
-                    </div>
+                    <Avatar className="size-10">
+                        <AvatarFallback className="text-sm font-semibold">{getUserInitial(user)}</AvatarFallback>
+                    </Avatar>
                     <div className={cn("min-w-0 flex-1", collapsed && "sm:hidden")}>
-                        <p className="truncate text-sm font-semibold text-base-content">
+                        <p className="truncate text-sm font-semibold text-sidebar-foreground">
                             {user.name || "Usuário"}
                         </p>
-                        <p className="truncate text-xs text-base-content/60">
+                        <p className="truncate text-xs text-muted-foreground">
                             {user.email || "Conta Financius"}
                         </p>
                     </div>

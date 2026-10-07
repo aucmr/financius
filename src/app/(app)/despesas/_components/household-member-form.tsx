@@ -1,15 +1,20 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { UserPlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { associateHouseholdMemberAction } from "@/src/app/(app)/household/actions";
 import {
     associateMemberSchema,
     type AssociateMemberValues,
 } from "@/src/app/(app)/household/schemas";
-import { getNotyf } from "@/src/lib/utils/notyf";
+import { Button } from "@/src/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/src/components/ui/field";
+import { Input } from "@/src/components/ui/input";
+import { Spinner } from "@/src/components/ui/spinner";
 
 export function HouseholdMemberForm() {
     const router = useRouter();
@@ -24,31 +29,32 @@ export function HouseholdMemberForm() {
         const result = await associateHouseholdMemberAction(values);
 
         if (!result.ok) {
-            getNotyf()?.error(result.message);
+            toast.error(result.message);
             return;
         }
 
-        getNotyf()?.success(result.message);
+        toast.success(result.message);
         reset();
         router.refresh();
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 sm:flex-row sm:items-start" noValidate>
-            <label className="form-control w-full sm:max-w-sm">
-                <span className="label-text mb-1 font-medium">E-mail da outra pessoa</span>
-                <input
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 sm:flex-row sm:items-end" noValidate>
+            <Field className="sm:max-w-sm" data-invalid={errors.email ? true : undefined}>
+                <FieldLabel htmlFor="household-member-email">E-mail da outra pessoa</FieldLabel>
+                <Input
+                    id="household-member-email"
                     type="email"
-                    className="input input-bordered w-full"
                     placeholder="pessoa@exemplo.com"
+                    aria-invalid={errors.email ? true : undefined}
                     {...register("email")}
                 />
-                {errors.email?.message && <span className="label-text-alt mt-1 text-error">{errors.email.message}</span>}
-            </label>
-            <button type="submit" className="btn btn-primary mt-6 gap-2" disabled={isSubmitting}>
-                {isSubmitting ? <span className="loading loading-spinner loading-xs" aria-hidden="true" /> : <span className="icon-[tabler--user-plus] size-4" aria-hidden="true" />}
+                {errors.email?.message ? <FieldError>{errors.email.message}</FieldError> : null}
+            </Field>
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Spinner data-icon="inline-start" /> : <UserPlusIcon data-icon="inline-start" />}
                 Associar conta
-            </button>
+            </Button>
         </form>
     );
 }

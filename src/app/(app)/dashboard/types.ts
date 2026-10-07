@@ -1,9 +1,11 @@
+import type { LucideIcon } from "lucide-react";
+
 export type DashboardMetric = {
   id: "balance" | "income" | "expenses" | "sharedExpenses";
   label: string;
   value: number | null;
   description: string;
-  icon: string;
+  icon: LucideIcon;
 };
 
 export type DashboardOverview = {

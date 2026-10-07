@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { LogOutIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
+
+import { buttonVariants } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils/cn";
 
 type SignOutButtonProps = {
@@ -12,7 +15,10 @@ export function SignOutButton({ collapsed = false }: SignOutButtonProps) {
     return (
         <Link
             href="/"
-            className="min-h-10 w-full rounded-field px-3 text-sm"
+            className={cn(
+                buttonVariants({ variant: "ghost" }),
+                "h-10 w-full justify-start gap-3 px-3 text-sm",
+            )}
             onClick={(event) => {
                 event.preventDefault();
                 void signOut({ callbackUrl: "/" });
@@ -20,7 +26,7 @@ export function SignOutButton({ collapsed = false }: SignOutButtonProps) {
             aria-label="Sair"
             title={collapsed ? "Sair" : undefined}
         >
-            <span className="icon-[tabler--logout-2] size-5" aria-hidden="true" />
+            <LogOutIcon aria-hidden="true" />
             <span className={cn("min-w-0 truncate", collapsed && "sm:hidden")}>Sair</span>
         </Link>
     );
