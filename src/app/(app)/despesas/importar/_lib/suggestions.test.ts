@@ -5,6 +5,8 @@ import { rankExpenseSuggestions } from "@/src/app/(app)/despesas/importar/_lib/s
 const candidate = {
   description: "Mercado da semana",
   notes: "Compra compartilhada",
+  importBatchId: null,
+  importMetadata: null,
   areaCategoryId: "alimentacao",
   areaCategoryName: "Alimentacao",
   areaSubcategoryId: "mercado",

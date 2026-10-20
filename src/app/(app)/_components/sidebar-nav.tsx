@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { LayoutDashboardIcon, ReceiptTextIcon, WalletIcon, type LucideIcon } from "lucide-react";
+import { LayoutDashboardIcon, ListChecksIcon, ReceiptTextIcon, WalletIcon, type LucideIcon } from "lucide-react";
 
 import { buttonVariants } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils/cn";
@@ -26,6 +26,12 @@ export const appNavigation = [
         label: "Despesas",
         description: "Acompanhe as saídas",
         icon: ReceiptTextIcon,
+    },
+    {
+        href: "/contas-a-pagar",
+        label: "Contas a pagar",
+        description: "Checklist mensal de pagamentos",
+        icon: ListChecksIcon,
     },
 ] satisfies ReadonlyArray<{ href: string; label: string; description: string; icon: LucideIcon }>;
 

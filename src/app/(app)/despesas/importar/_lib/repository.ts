@@ -16,6 +16,8 @@ export { findExpenseOptions, findExpenseReferences };
 export type ImportSuggestionCandidate = {
   description: string;
   notes: string | null;
+  importBatchId: string | null;
+  importMetadata: Prisma.JsonValue | null;
   areaCategoryId: string;
   areaCategoryName: string;
   areaSubcategoryId: string;
@@ -33,6 +35,8 @@ export async function findImportSuggestionCandidates(householdId: string) {
     select: {
       description: true,
       notes: true,
+      importBatchId: true,
+      importMetadata: true,
       areaCategory: { select: { id: true, name: true } },
       areaSubcategory: { select: { id: true, name: true } },
       profileCategory: { select: { id: true, name: true } },

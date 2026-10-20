@@ -4,6 +4,7 @@ import type { AuthContext } from "@/src/lib/auth/context";
 import type { ImportBatchInput } from "@/src/app/(app)/despesas/importar/_lib/schemas";
 import {
   createImport,
+  getImportSuggestions,
   type ImportRepository,
 } from "@/src/app/(app)/despesas/importar/_lib/services";
 
@@ -65,7 +66,7 @@ function createRepository() {
       profileCategory: { id: "profile-id" },
       responsibleMember: { userId: "member-id" },
     }),
-    findImportSuggestionCandidates: vi.fn(),
+    findImportSuggestionCandidates: vi.fn().mockResolvedValue([]),
     findImportDuplicateCandidates: vi.fn().mockResolvedValue([]),
     createImportBatch: vi.fn().mockResolvedValue({ id: "batch-id" }),
   } satisfies ImportRepository;
@@ -144,8 +145,75 @@ describe("import service", () => {
       creditCardTransactionDate: new Date("2026-06-10T00:00:00.000Z"),
       responsibleUserId: "member-id",
     });
-    expect(persisted.notes).toContain("Portador: Pessoa 1");
-    expect(persisted.notes).toContain("Parcela: 2/3");
+    expect(persisted.notes).toBe("Ajuste confirmado");
+    expect(persisted.importMetadata).toMatchObject({
+      cardholder: "Pessoa 1",
+      installment: "2/3",
+      authorizationCode: "ABC123",
+      documentNumber: "5250",
+    });
+  });
+
+  it("does not create notes from CSV metadata when no freeform note was entered", async () => {
+    const repository = createRepository();
+
+    await createImport(
+      context,
+      createBatch({ rows: [createRow({ notes: "" })] }),
+      repository,
+    );
+    const persisted = repository.createImportBatch.mock.calls[0][0].expenses[0];
+
+    expect(persisted.notes).toBeNull();
+    expect(persisted.importMetadata).toMatchObject({
+      cardholder: "Pessoa 1",
+      installment: "2/3",
+    });
+  });
+
+  it("filters generated metadata from historical import suggestions only", async () => {
+    const repository = createRepository();
+    repository.findImportSuggestionCandidates.mockResolvedValue([
+      {
+        description: "Kicks",
+        notes:
+          "Kicks | Portador: Pessoa 1 | Parcela: 2/3 | Autorizacao: ABC123 | Documento/cartao: 5250",
+        importBatchId: "batch-id",
+        importMetadata: {
+          cardholder: "Pessoa 1",
+          installment: "2/3",
+          authorizationCode: "ABC123",
+          documentNumber: "5250",
+        },
+        areaCategory: { id: "area-id", name: "Casa" },
+        areaSubcategory: { id: "subcategory-id", name: "Compras" },
+        profileCategory: { id: "profile-id", name: "Pessoal" },
+      },
+      {
+        description: "Kicks",
+        notes: "Portador: observação livre",
+        importBatchId: null,
+        importMetadata: null,
+        areaCategory: { id: "area-id", name: "Casa" },
+        areaSubcategory: { id: "other-subcategory-id", name: "Outros" },
+        profileCategory: { id: "profile-id", name: "Pessoal" },
+      },
+    ]);
+
+    const suggestions = await getImportSuggestions(context, "Kicks", repository);
+
+    expect(suggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          areaSubcategoryId: "subcategory-id",
+          notes: "Kicks",
+        }),
+        expect.objectContaining({
+          areaSubcategoryId: "other-subcategory-id",
+          notes: "Portador: observação livre",
+        }),
+      ]),
+    );
   });
 
   it("keeps duplicate rows out unless the review explicitly allows them", async () => {

@@ -83,7 +83,9 @@ export function ExpenseMonthPage({ data }: ExpenseMonthPageProps) {
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h2 className="text-xl font-semibold text-foreground">Lançamentos</h2>
-                        <p className="text-sm text-muted-foreground">Organizados por categoria de área e subcategoria.</p>
+                        <p className="text-sm text-muted-foreground">
+                            Expanda uma categoria e depois uma subcategoria para ver os lançamentos.
+                        </p>
                     </div>
                     <span className="text-sm text-muted-foreground">{data.expenses.length} {data.expenses.length === 1 ? "item" : "itens"}</span>
                 </div>

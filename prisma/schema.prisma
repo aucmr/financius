@@ -54,6 +54,37 @@ model Household {
     members       HouseholdMember[]
     expenses      Expense[]
     importBatches ImportBatch[]
+    payableItems  PayableItem[]
+}
+
+model PayableItem {
+    id          String    @id @default(cuid())
+    householdId String
+    name        String
+    defaultKey  String?
+    sortOrder   Int
+    createdAt   DateTime  @default(now())
+    archivedAt  DateTime?
+
+    household      Household                    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+    monthlyStatuses PayableItemMonthlyStatus[]
+
+    @@unique([householdId, defaultKey])
+    @@index([householdId, archivedAt, sortOrder])
+}
+
+model PayableItemMonthlyStatus {
+    id            String   @id @default(cuid())
+    payableItemId String
+    year          Int
+    month         Int
+    isPaid        Boolean  @default(false)
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    payableItem PayableItem @relation(fields: [payableItemId], references: [id], onDelete: Cascade)
+
+    @@unique([payableItemId, year, month])
 }
 
 model HouseholdMember {

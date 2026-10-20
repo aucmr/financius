@@ -84,25 +84,8 @@ function normalizeSignedAmount(value: string) {
   return `${match[1]}${whole}.${fraction}`;
 }
 
-function getSourceNotes(row: ImportExpenseRowInput) {
-  const technicalNotes = [
-    row.cardholder ? `Portador: ${row.cardholder}` : null,
-    row.installment
-      ? `Parcela: ${row.installment.current}/${row.installment.total}`
-      : null,
-    row.authorizationCode ? `Autorizacao: ${row.authorizationCode}` : null,
-    row.documentNumber ? `Documento/cartao: ${row.documentNumber}` : null,
-  ].filter((value): value is string => Boolean(value));
-
-  return technicalNotes;
-}
-
 function buildNotes(row: ImportExpenseRowInput) {
-  return (
-    [...(row.notes.trim() ? [row.notes.trim()] : []), ...getSourceNotes(row)]
-      .join(" | ")
-      .slice(0, 1000) || null
-  );
+  return row.notes.trim().slice(0, 1000) || null;
 }
 
 function toParsedRow(row: ImportRowIdentityInput): ParsedImportRow {
@@ -190,6 +173,8 @@ export async function getImportSuggestions(
     candidates.map((candidate) => ({
       description: candidate.description,
       notes: candidate.notes,
+      importBatchId: candidate.importBatchId,
+      importMetadata: candidate.importMetadata,
       areaCategoryId: candidate.areaCategory.id,
       areaCategoryName: candidate.areaCategory.name,
       areaSubcategoryId: candidate.areaSubcategory.id,

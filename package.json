@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "npm run prisma:generate",
     "dev": "next dev",
+    "prebuild": "npm run prisma:generate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -15,7 +17,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "npm run prisma:generate"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

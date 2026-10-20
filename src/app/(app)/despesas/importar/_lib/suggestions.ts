@@ -3,6 +3,8 @@ import { normalizeText } from "@/src/lib/imports";
 export type SuggestionCandidate = {
   description: string;
   notes: string | null;
+  importBatchId: string | null;
+  importMetadata: unknown;
   areaCategoryId: string;
   areaCategoryName: string;
   areaSubcategoryId: string;
@@ -24,6 +26,50 @@ export type ExpenseImportSuggestion = {
   source: "EXACT" | "TRIGRAM";
   matchedDescription: string;
 };
+
+function isMetadataRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getGeneratedImportNotes(metadata: unknown) {
+  if (!isMetadataRecord(metadata)) {
+    return new Set<string>();
+  }
+
+  const generatedNotes = new Set<string>();
+  const fields = [
+    ["cardholder", "Portador"],
+    ["installment", "Parcela"],
+    ["authorizationCode", "Autorizacao"],
+    ["documentNumber", "Documento/cartao"],
+  ] as const;
+
+  for (const [field, label] of fields) {
+    const value = metadata[field];
+    if (typeof value === "string" && value) {
+      generatedNotes.add(`${label}: ${value}`);
+    }
+  }
+
+  return generatedNotes;
+}
+
+function getSuggestionNotes(candidate: SuggestionCandidate) {
+  const notes = candidate.notes ?? "";
+  if (candidate.importBatchId === null && candidate.importMetadata === null) {
+    return notes;
+  }
+
+  const generatedNotes = getGeneratedImportNotes(candidate.importMetadata);
+  if (generatedNotes.size === 0) {
+    return notes;
+  }
+
+  return notes
+    .split(" | ")
+    .filter((segment) => !generatedNotes.has(segment.trim()))
+    .join(" | ");
+}
 
 function getTrigrams(value: string) {
   const normalized = `  ${normalizeText(value)}  `;
@@ -113,7 +159,7 @@ export function rankExpenseSuggestions(
       areaSubcategoryName: candidate.areaSubcategoryName,
       profileCategoryId: candidate.profileCategoryId,
       profileCategoryName: candidate.profileCategoryName,
-      notes: candidate.notes ?? "",
+      notes: getSuggestionNotes(candidate),
       confidence: Number(score.toFixed(4)),
       matchCount,
       source: exact ? ("EXACT" as const) : ("TRIGRAM" as const),

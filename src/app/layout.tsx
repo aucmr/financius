@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ThemeProvider } from "next-themes";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/src/components/ui/sonner";
 import { TooltipProvider } from "@/src/components/ui/tooltip";
@@ -28,10 +29,19 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <TooltipProvider>{children}</TooltipProvider>
-        <Toaster richColors />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          disableTransitionOnChange
+          enableSystem
+          storageKey="financius:theme"
+        >
+          <TooltipProvider>{children}</TooltipProvider>
+          <Toaster richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { AnchorHTMLAttributes, PropsWithChildren } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -73,19 +73,65 @@ describe("ExpenseTable", () => {
         expect(screen.getByRole("link", { name: "Nova despesa" })).toBeInTheDocument();
     });
 
-    it("renders populated rows inside a card without wrapping each row", () => {
+    it("keeps the desktop table and mobile list in one card with shared disclosure state", () => {
         const { container } = render(<ExpenseTable expenses={[expense]} />);
-        const table = screen.getByRole("table");
+        const desktopView = screen.getByRole("region", { name: "Tabela de lançamentos" });
+        const mobileView = screen.getByRole("region", { name: "Lista compacta de lançamentos" });
+        const table = within(desktopView).getByRole("table");
         const tableSurface = table.parentElement;
         const card = table.closest('[data-slot="card"]');
+        const categoryToggle = within(mobileView).getByRole("button", {
+            name: "Expandir categoria Casa",
+        });
 
         expect(tableSurface).toHaveClass("overflow-x-auto");
+        expect(desktopView).toHaveClass("hidden", "xl:block");
+        expect(mobileView).toHaveClass("xl:hidden");
         expect(card).toBeInTheDocument();
         expect(card?.querySelector('[data-slot="card-content"]')).toHaveClass("overflow-hidden", "p-0");
         expect(container.querySelectorAll('[data-slot="card"]')).toHaveLength(1);
-        expect(screen.getByText("Casa")).toBeInTheDocument();
-        expect(screen.getByText("Mercado")).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: "Editar Mercado da semana" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Excluir Mercado da semana" })).toBeInTheDocument();
+        expect(within(mobileView).getByText("Casa")).toBeInTheDocument();
+        expect(categoryToggle).toHaveAttribute("aria-expanded", "false");
+        expect(within(mobileView).queryByText("Mercado")).not.toBeInTheDocument();
+        expect(
+            within(mobileView).queryByRole("link", { name: "Editar Mercado da semana" }),
+        ).not.toBeInTheDocument();
+
+        fireEvent.click(categoryToggle);
+
+        const subcategoryToggle = within(mobileView).getByRole("button", {
+            name: "Expandir subcategoria Mercado",
+        });
+
+        expect(categoryToggle).toHaveAttribute("aria-expanded", "true");
+        expect(
+            within(desktopView).getByRole("button", { name: "Recolher categoria Casa" }),
+        ).toHaveAttribute("aria-expanded", "true");
+        expect(subcategoryToggle).toHaveAttribute("aria-expanded", "false");
+        expect(within(mobileView).getByText("Mercado")).toBeInTheDocument();
+        expect(
+            within(mobileView).queryByRole("link", { name: "Editar Mercado da semana" }),
+        ).not.toBeInTheDocument();
+
+        fireEvent.click(subcategoryToggle);
+
+        expect(
+            within(mobileView).getByRole("link", { name: "Editar Mercado da semana" }),
+        ).toBeInTheDocument();
+        expect(
+            within(mobileView).getByRole("button", { name: "Excluir Mercado da semana" }),
+        ).toBeInTheDocument();
+        expect(
+            within(desktopView).getByRole("link", { name: "Editar Mercado da semana" }),
+        ).toBeInTheDocument();
+        expect(
+            within(desktopView).getByRole("button", { name: "Excluir Mercado da semana" }),
+        ).toBeInTheDocument();
+        expect(within(desktopView).getByText("CustoFixo")).toBeInTheDocument();
+        expect(within(desktopView).getByText("Ana")).toBeInTheDocument();
+        expect(within(mobileView).getByText("Perfil: CustoFixo")).toBeInTheDocument();
+        expect(within(mobileView).getByText("Responsável: Ana")).toBeInTheDocument();
+        expect(within(mobileView).getByText("Compartilhada")).toBeInTheDocument();
+        expect(within(mobileView).getByText("12/07")).toBeInTheDocument();
     });
 });

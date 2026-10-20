@@ -3,32 +3,44 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { AnchorHTMLAttributes, PropsWithChildren } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "@/src/app/(app)/_components/app-shell";
 
+const usePathnameMock = vi.hoisted(() => vi.fn());
+
 type MockSidebarProps = {
     collapsed: boolean;
     mobileOpen: boolean;
-    onToggleCollapsed: () => void;
     onNavigate: () => void;
 };
+
+vi.mock("next/navigation", () => ({
+    usePathname: usePathnameMock,
+}));
+
+vi.mock("next/link", () => ({
+    default: ({
+        children,
+        ...props
+    }: PropsWithChildren<AnchorHTMLAttributes<HTMLAnchorElement>>) => (
+        <a {...props}>{children}</a>
+    ),
+}));
 
 vi.mock("@/src/app/(app)/_components/financius-logo", () => ({
     FinanciusLogo: () => <span>Financius</span>,
 }));
 
 vi.mock("@/src/app/(app)/_components/sidebar", () => ({
-    Sidebar: ({ collapsed, mobileOpen, onToggleCollapsed, onNavigate }: MockSidebarProps) => (
+    Sidebar: ({ collapsed, mobileOpen, onNavigate }: MockSidebarProps) => (
         <aside
             id="financius-sidebar"
             aria-label="Barra lateral"
             data-collapsed={String(collapsed)}
             data-mobile-open={String(mobileOpen)}
         >
-            <button type="button" onClick={onToggleCollapsed}>
-                Alternar mini
-            </button>
             <button type="button" onClick={onNavigate}>
                 Navegar para fechar
             </button>
@@ -42,6 +54,7 @@ afterEach(() => {
 
 beforeEach(() => {
     window.localStorage.clear();
+    usePathnameMock.mockReturnValue("/dashboard");
 });
 
 describe("AppShell", () => {
@@ -112,7 +125,26 @@ describe("AppShell", () => {
         expect(trigger).toHaveFocus();
     });
 
-    it("persists the mini-sidebar preference", () => {
+    it("replaces the search and account header with a route-aware breadcrumb", () => {
+        usePathnameMock.mockReturnValue("/despesas/nova");
+
+        render(
+            <AppShell user={{ name: "Ana", email: "ana@example.com" }}>
+                <p>Conteúdo</p>
+            </AppShell>,
+        );
+
+        expect(screen.getByRole("navigation", { name: "breadcrumb" })).toBeInTheDocument();
+        expect(screen.getByRole("link", { name: "Despesas" })).toHaveAttribute(
+            "href",
+            "/despesas",
+        );
+        expect(screen.getByText("Nova despesa")).toHaveAttribute("aria-current", "page");
+        expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+        expect(screen.queryByText("ana@example.com")).not.toBeInTheDocument();
+    });
+
+    it("persists the mini-sidebar preference from the header toggle", () => {
         render(
             <AppShell user={{ name: "Ana", email: "ana@example.com" }}>
                 <p>Conteúdo</p>
@@ -123,7 +155,9 @@ describe("AppShell", () => {
 
         expect(sidebar).toHaveAttribute("data-collapsed", "false");
 
-        fireEvent.click(screen.getByRole("button", { name: "Alternar mini" }));
+        fireEvent.click(
+            screen.getByRole("button", { name: "Recolher barra lateral" }),
+        );
 
         expect(sidebar).toHaveAttribute("data-collapsed", "true");
         expect(window.localStorage.getItem("financius:sidebar-collapsed")).toBe("true");
