@@ -28,10 +28,23 @@ const options: ExpenseOptions = {
             name: "Alimentacao",
             color: "#008000",
             icon: null,
-            subcategories: [{ id: "subcategory-market", name: "Mercado" }],
+            sortOrder: 0,
+            isArchived: false,
+            subcategories: [{
+                id: "subcategory-market",
+                name: "Mercado",
+                isArchived: false,
+            }],
         },
     ],
-    profileCategories: [{ id: "profile-fixed", name: "CustoFixo", color: "#0000ff", icon: null }],
+    profileCategories: [{
+        id: "profile-fixed",
+        name: "CustoFixo",
+        color: "#0000ff",
+        icon: null,
+        sortOrder: 0,
+        isArchived: false,
+    }],
     members: [{ id: "member-1", name: "Ana", email: "ana@example.com" }],
 };
 

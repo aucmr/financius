@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/client";
-import { CategoryKind, TransactionType } from "./generated/enums";
+import { ensureDefaultExpenseCategories } from "../src/lib/categories/defaults";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -15,95 +15,19 @@ const adapter = new PrismaPg(connectionString, {
 });
 const prisma = new PrismaClient({ adapter });
 
-const areaCategories = {
-  Casa: [
-    "Prestação",
-    "Seguro",
-    "Condomínio",
-    "IPTU",
-    "Energia",
-    "Água",
-    "Internet",
-    "TV",
-    "Faxina",
-    "Pets",
-    "Outros",
-  ],
-  Alimentação: ["Mercado", "Restaurante", "Outros"],
-  Saúde: ["Plano de Saúde", "Dentista", "Medicamentos", "Outros"],
-  Transporte: ["IPVA", "Seguro", "Combustível", "Manutenção", "Uber", "Outros"],
-  Pessoal: ["Esporte", "Vestuário", "Assinaturas", "Outros"],
-  Filhos: ["Saúde", "Escola", "Vacina", "Outros"],
-  Educação: ["Curso", "Livro", "Outros"],
-  Lazer: ["Clube", "Confraternização", "Passeio", "Outros"],
-  Viagens: [
-    "Passagem",
-    "Hospedagem",
-    "Alimentação",
-    "Transporte",
-    "Entretenimento",
-    "Outros",
-  ],
-  Outros: ["Extras Diários", "Presentes", "Doações", "Tarifas"],
-} as const;
-
-const profileCategories = [
-  "CustoFixo",
-  "Conforto",
-  "Prazer",
-  "Conhecimento",
-  "Liberdade",
-] as const;
-
 async function seedCategories() {
-  for (const [name, subcategories] of Object.entries(areaCategories)) {
-    const category = await prisma.category.upsert({
-      where: { name_kind: { name, kind: CategoryKind.AREA } },
-      update: { type: TransactionType.EXPENSE },
-      create: {
-        name,
-        kind: CategoryKind.AREA,
-        type: TransactionType.EXPENSE,
-        color: "#0f766e",
-        icon: "shapes",
-      },
-    });
+  const households = await prisma.household.findMany({
+    select: { id: true },
+  });
 
-    for (const subcategoryName of subcategories) {
-      await prisma.areaSubcategory.upsert({
-        where: {
-          areaCategoryId_name: {
-            areaCategoryId: category.id,
-            name: subcategoryName,
-          },
-        },
-        update: {},
-        create: {
-          areaCategoryId: category.id,
-          name: subcategoryName,
-        },
-      });
-    }
-  }
-
-  for (const name of profileCategories) {
-    await prisma.category.upsert({
-      where: { name_kind: { name, kind: CategoryKind.PROFILE } },
-      update: { type: TransactionType.EXPENSE },
-      create: {
-        name,
-        kind: CategoryKind.PROFILE,
-        type: TransactionType.EXPENSE,
-        color: "#b45309",
-        icon: "sliders-horizontal",
-      },
-    });
+  for (const household of households) {
+    await ensureDefaultExpenseCategories(prisma, household.id);
   }
 }
 
 async function main() {
   await seedCategories();
-  console.log("Expense categories seeded.");
+  console.log("Expense categories seeded per household.");
 }
 
 main()

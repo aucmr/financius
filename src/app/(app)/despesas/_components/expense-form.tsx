@@ -138,7 +138,9 @@ export function ExpenseForm({ expenseId, options, initialValues, householdName }
                                 <NativeSelect id="areaCategoryId" className="w-full" aria-invalid={errors.areaCategoryId ? true : undefined} {...register("areaCategoryId")}>
                                     <NativeSelectOption value="">Selecione uma área</NativeSelectOption>
                                     {options.areaCategories.map((item) => (
-                                        <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>
+                                        <NativeSelectOption key={item.id} value={item.id}>
+                                            {item.name}{item.isArchived ? " (arquivada)" : ""}
+                                        </NativeSelectOption>
                                     ))}
                                 </NativeSelect>
                                 {errors.areaCategoryId?.message ? <FieldError>{errors.areaCategoryId.message}</FieldError> : null}
@@ -148,7 +150,9 @@ export function ExpenseForm({ expenseId, options, initialValues, householdName }
                                 <NativeSelect id="areaSubcategoryId" className="w-full" aria-invalid={errors.areaSubcategoryId ? true : undefined} disabled={!areaCategoryId} {...register("areaSubcategoryId")}>
                                     <NativeSelectOption value="">Selecione uma subcategoria</NativeSelectOption>
                                     {subcategories.map((item) => (
-                                        <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>
+                                        <NativeSelectOption key={item.id} value={item.id}>
+                                            {item.name}{item.isArchived ? " (arquivada)" : ""}
+                                        </NativeSelectOption>
                                     ))}
                                 </NativeSelect>
                                 {errors.areaSubcategoryId?.message ? <FieldError>{errors.areaSubcategoryId.message}</FieldError> : null}
@@ -161,7 +165,9 @@ export function ExpenseForm({ expenseId, options, initialValues, householdName }
                                 <NativeSelect id="profileCategoryId" className="w-full" aria-invalid={errors.profileCategoryId ? true : undefined} {...register("profileCategoryId")}>
                                     <NativeSelectOption value="">Selecione um perfil</NativeSelectOption>
                                     {options.profileCategories.map((item) => (
-                                        <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>
+                                        <NativeSelectOption key={item.id} value={item.id}>
+                                            {item.name}{item.isArchived ? " (arquivada)" : ""}
+                                        </NativeSelectOption>
                                     ))}
                                 </NativeSelect>
                                 {errors.profileCategoryId?.message ? <FieldError>{errors.profileCategoryId.message}</FieldError> : null}

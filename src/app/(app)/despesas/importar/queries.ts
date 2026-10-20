@@ -6,11 +6,24 @@ function mapOptions(
   options: Awaited<ReturnType<typeof findExpenseOptions>>,
 ): ExpenseOptions {
   return {
-    areaCategories: options.areaCategories.map((category) => ({
-      ...category,
-      subcategories: category.areaSubcategories,
-    })),
-    profileCategories: options.profileCategories,
+    areaCategories: options.areaCategories.map(
+      ({ areaSubcategories, archivedAt, ...category }) => ({
+        ...category,
+        isArchived: archivedAt !== null,
+        subcategories: areaSubcategories.map(
+          ({ archivedAt: subcategoryArchivedAt, ...subcategory }) => ({
+            ...subcategory,
+            isArchived: subcategoryArchivedAt !== null,
+          }),
+        ),
+      }),
+    ),
+    profileCategories: options.profileCategories.map(
+      ({ archivedAt, ...category }) => ({
+        ...category,
+        isArchived: archivedAt !== null,
+      }),
+    ),
     members: options.members,
   };
 }

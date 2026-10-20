@@ -50,7 +50,10 @@ describe("SidebarNav", () => {
 
         render(<SidebarNav collapsed={false} />);
 
-        expect(screen.getAllByRole("link")).toHaveLength(4);
+        expect(screen.getAllByRole("link")).toHaveLength(5);
+        expect(
+            screen.getByRole("link", { name: /categorias/i }),
+        ).toHaveAttribute("href", "/categorias");
         expect(
             screen.getByRole("link", { name: /contas a pagar/i }),
         ).toHaveAttribute("href", "/contas-a-pagar");

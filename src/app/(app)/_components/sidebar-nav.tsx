@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { LayoutDashboardIcon, ListChecksIcon, ReceiptTextIcon, WalletIcon, type LucideIcon } from "lucide-react";
+import { LayoutDashboardIcon, ListChecksIcon, ReceiptTextIcon, ShapesIcon, WalletIcon, type LucideIcon } from "lucide-react";
 
 import { buttonVariants } from "@/src/components/ui/button";
 import { cn } from "@/src/lib/utils/cn";
@@ -26,6 +26,12 @@ export const appNavigation = [
         label: "Despesas",
         description: "Acompanhe as saídas",
         icon: ReceiptTextIcon,
+    },
+    {
+        href: "/categorias",
+        label: "Categorias",
+        description: "Gerencie categorias e subcategorias",
+        icon: ShapesIcon,
     },
     {
         href: "/contas-a-pagar",

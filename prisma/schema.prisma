@@ -55,6 +55,7 @@ model Household {
     expenses      Expense[]
     importBatches ImportBatch[]
     payableItems  PayableItem[]
+    categories    Category[]
 }
 
 model PayableItem {
@@ -100,21 +101,26 @@ model HouseholdMember {
 }
 
 model Category {
-    id        String          @id @default(cuid())
-    name      String
-    kind      CategoryKind
-    type      TransactionType
-    color     String
-    icon      String?
-    createdAt DateTime        @default(now())
-    updatedAt DateTime        @updatedAt
+    id          String          @id @default(cuid())
+    householdId String?
+    name        String
+    kind        CategoryKind
+    type        TransactionType
+    color       String
+    icon        String?
+    sortOrder   Int             @default(0)
+    archivedAt  DateTime?
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime        @updatedAt
 
     expensesAsArea    Expense[]         @relation("ExpenseAreaCategory")
     expensesAsProfile Expense[]         @relation("ExpenseProfileCategory")
     areaSubcategories AreaSubcategory[]
     budgets           Budget[]
+    household         Household?        @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
-    @@unique([name, kind])
+    @@unique([householdId, name, kind], map: "Category_householdId_name_kind_key")
+    @@index([householdId, kind, type, archivedAt, sortOrder], map: "Category_household_category_order_idx")
 }
 
 model Expense {
@@ -182,6 +188,7 @@ model AreaSubcategory {
     id             String   @id @default(cuid())
     name           String
     areaCategoryId String
+    archivedAt     DateTime?
     createdAt      DateTime @default(now())
     updatedAt      DateTime @updatedAt
 
@@ -189,6 +196,7 @@ model AreaSubcategory {
     expenses     Expense[]
 
     @@unique([areaCategoryId, name])
+    @@index([areaCategoryId, archivedAt], map: "AreaSubcategory_active_idx")
 }
 
 model Income {

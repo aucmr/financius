@@ -1,5 +1,7 @@
 import { auth } from "@/src/lib/auth/auth";
+import { Prisma } from "@/prisma/generated/client";
 import { prisma } from "@/src/lib/db/prisma";
+import { ensureDefaultExpenseCategories } from "@/src/lib/categories/defaults";
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -39,16 +41,34 @@ async function createLegacyHousehold(userId: string) {
   }
 
   try {
-    await prisma.household.create({
-      data: {
-        name: `${user.name}'s household`,
-        members: {
-          create: { userId },
+    await prisma.$transaction(async (transaction) => {
+      const household = await transaction.household.create({
+        data: {
+          name: `${user.name}'s household`,
+          members: {
+            create: { userId },
+          },
         },
-      },
+        select: { id: true },
+      });
+      await ensureDefaultExpenseCategories(transaction, household.id);
     });
-  } catch {
-    // Another request may have provisioned the legacy user at the same time.
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      const existingMembership = await prisma.householdMember.findUnique({
+        where: { userId },
+        select: { userId: true },
+      });
+
+      if (existingMembership) {
+        return;
+      }
+    }
+
+    throw error;
   }
 }
 

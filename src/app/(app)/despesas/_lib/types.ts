@@ -3,9 +3,12 @@ export type ExpenseCategoryOption = {
   name: string;
   color: string;
   icon: string | null;
+  sortOrder: number;
+  isArchived: boolean;
   subcategories: {
     id: string;
     name: string;
+    isArchived: boolean;
   }[];
 };
 
@@ -14,6 +17,8 @@ export type ExpenseProfileOption = {
   name: string;
   color: string;
   icon: string | null;
+  sortOrder: number;
+  isArchived: boolean;
 };
 
 export type ExpenseMemberOption = {
@@ -44,6 +49,8 @@ export type ExpenseListItem = {
     name: string;
     color: string;
     icon: string | null;
+    sortOrder: number;
+    isArchived: boolean;
   };
   areaSubcategory: {
     id: string;
@@ -52,6 +59,8 @@ export type ExpenseListItem = {
   profileCategory: {
     id: string;
     name: string;
+    color: string;
+    icon: string | null;
   };
   creator: {
     id: string;

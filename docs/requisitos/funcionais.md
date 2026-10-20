@@ -7,24 +7,28 @@ Lista de requisitos do sistema Financius
 - Cada despesa registrada deve ser marcada como compartilhada ou não. As desepsas compartilhadas devem ser contabilizadas para a divisão mensal dos gastos.
 - A fórmula padrão para divisão dos gastos é somar todas as despesas compartilhadas do mês e dividir de forma propocional as receitas do casal. Porém a fórmula é editável e deve respeitar a decisão do casal. Por exemplo, dividir despesas igualitariamente ou por outra proporção esoclhida.
 - Cada despesa deve ser registrada com uma categoria de AREA e uma respectiva subarea, e uma categoria de PERFIL
-- Categorias de AREA e suas subcategorias:
-  - Casa: Prestação, Seguro, Condomínio, IPTU, Energia, Água, Internet, TV, Faxina, Pets, Outros
+- Cada household possui seu próprio catálogo de categorias de despesa. O catálogo inicial é copiado para households existentes e provisionado para novos; alterações de um casal não afetam outros.
+- As categorias podem ser cadastradas, editadas, reordenadas e arquivadas. A ordem das categorias ativas é compartilhada pelos seletores, pela importação e pelos grupos da tela de despesas.
+- Arquivar uma categoria ou subcategoria preserva as despesas existentes e impede novas classificações com ela. Ao editar uma despesa antiga, sua classificação arquivada pode ser mantida; sugestões de importação usam somente categorias ativas.
+- Categorias podem ter cor e ícone personalizados. Somente categorias de AREA possuem subcategorias.
+- Categorias de AREA e suas subcategorias iniciais:
   - Alimentação: Mercado, Restaurante, Outros
+  - Casa: Prestação, Seguro, Condomínio, IPTU, Energia, Água, Internet, TV, Faxina, Pets, Outros
+  - Educação: Curso, Livro, Outros
+  - Filhos: Saúde, Escola, Vacina, Outros
+  - Lazer: Clube, Confraternização, Passeio, Outros
+  - Outros: Extras Diários, Presentes, Doações, Tarifas
+  - Pessoal: Esporte, Vestuário, Assinaturas, Outros
   - Saúde: Plano de Saúde, Dentista, Medicamentos, Outros
   - Transporte: IPVA, Seguro, Combustível, Manutenção, Uber, Outros
-  - Pessoal: Esporte, Vestuário, Assinaturas, Outros
-  - Filhos: Saúde, Escola, Vacina, Outros
-  - Educação: Curso, Livro, Outros
-  - Lazer: Clube, Confraternização, Passeio, Outros
   - Viagens: Passagem, Hospedagem, Alimentação, Transporte, Entretenimento, Outros
-  - Outros: Extras Diários, Presentes, Doações, Tarifas
 
 - Categorias de PERFIL:
-  - CustoFixo
-  - Conforto
-  - Prazer
   - Conhecimento
+  - Conforto
+  - CustoFixo
   - Liberdade
+  - Prazer
 
 ## Notas da primeira implementação de despesas
 
@@ -36,7 +40,7 @@ Lista de requisitos do sistema Financius
 - A exclusão de despesas é definitiva nesta primeira versão.
 - `shared` marca a despesa como participante do resumo mensal compartilhado. A fórmula editável e o rateio detalhado ainda não fazem parte desta entrega.
 - `recurring` é apenas uma marcação visual nesta primeira versão e não gera lançamentos futuros.
-- O catálogo de categorias e subcategorias é carregado pelo seed do Prisma; não há CRUD de categorias nesta etapa.
+- O menu lateral oferece o gerenciamento do catálogo do casal, incluindo subcategorias de AREA, ordem, arquivamento e aparência visual.
 
 ## Importação de faturas e extratos
 

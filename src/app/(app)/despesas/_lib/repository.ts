@@ -21,6 +21,8 @@ const expenseSelect = {
       name: true,
       color: true,
       icon: true,
+      sortOrder: true,
+      archivedAt: true,
     },
   },
   areaSubcategory: {
@@ -33,6 +35,8 @@ const expenseSelect = {
     select: {
       id: true,
       name: true,
+      color: true,
+      icon: true,
     },
   },
   user: {
@@ -82,38 +86,65 @@ export type PersistExpenseInput = {
   shared: boolean;
 };
 
-export async function findExpenseOptions(householdId: string) {
+export type CurrentExpenseCategoryIds = Pick<
+  PersistExpenseInput,
+  "areaCategoryId" | "areaSubcategoryId" | "profileCategoryId"
+>;
+
+function activeOrSelectedFilter(selectedId?: string) {
+  return selectedId
+    ? { OR: [{ archivedAt: null }, { id: selectedId }] }
+    : { archivedAt: null };
+}
+
+export async function findExpenseOptions(
+  householdId: string,
+  currentExpenseCategoryIds?: CurrentExpenseCategoryIds,
+) {
   const prisma = await getPrisma();
   const [areaCategories, profileCategories, members] =
     await prisma.$transaction([
       prisma.category.findMany({
         where: {
+          householdId,
           kind: CategoryKind.AREA,
           type: TransactionType.EXPENSE,
+          ...activeOrSelectedFilter(currentExpenseCategoryIds?.areaCategoryId),
         },
-        orderBy: { name: "asc" },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }, { id: "asc" }],
         select: {
           id: true,
           name: true,
           color: true,
           icon: true,
+          sortOrder: true,
+          archivedAt: true,
           areaSubcategories: {
+            where: activeOrSelectedFilter(
+              currentExpenseCategoryIds?.areaSubcategoryId,
+            ),
             orderBy: { name: "asc" },
-            select: { id: true, name: true },
+            select: { id: true, name: true, archivedAt: true },
           },
         },
       }),
       prisma.category.findMany({
         where: {
+          householdId,
           kind: CategoryKind.PROFILE,
           type: TransactionType.EXPENSE,
+          ...activeOrSelectedFilter(
+            currentExpenseCategoryIds?.profileCategoryId,
+          ),
         },
-        orderBy: { name: "asc" },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }, { id: "asc" }],
         select: {
           id: true,
           name: true,
           color: true,
           icon: true,
+          sortOrder: true,
+          archivedAt: true,
         },
       }),
       prisma.householdMember.findMany({
@@ -147,15 +178,34 @@ export async function findExpenseReferences(
     | "profileCategoryId"
     | "responsibleUserId"
   >,
+  existingExpenseId?: string,
 ) {
   const prisma = await getPrisma();
+  const currentExpense = existingExpenseId
+    ? await prisma.expense.findFirst({
+        where: { id: existingExpenseId, householdId },
+        select: {
+          areaCategoryId: true,
+          areaSubcategoryId: true,
+          profileCategoryId: true,
+        },
+      })
+    : null;
+  const keepingAreaCategory =
+    input.areaCategoryId === currentExpense?.areaCategoryId;
+  const keepingAreaSubcategory =
+    input.areaSubcategoryId === currentExpense?.areaSubcategoryId;
+  const keepingProfileCategory =
+    input.profileCategoryId === currentExpense?.profileCategoryId;
   const [areaCategory, areaSubcategory, profileCategory, responsibleMember] =
     await prisma.$transaction([
       prisma.category.findFirst({
         where: {
           id: input.areaCategoryId,
+          householdId,
           kind: CategoryKind.AREA,
           type: TransactionType.EXPENSE,
+          ...(keepingAreaCategory ? {} : { archivedAt: null }),
         },
         select: { id: true },
       }),
@@ -163,14 +213,25 @@ export async function findExpenseReferences(
         where: {
           id: input.areaSubcategoryId,
           areaCategoryId: input.areaCategoryId,
+          ...(keepingAreaSubcategory ? {} : { archivedAt: null }),
+          areaCategory: {
+            is: {
+              householdId,
+              kind: CategoryKind.AREA,
+              type: TransactionType.EXPENSE,
+              ...(keepingAreaCategory ? {} : { archivedAt: null }),
+            },
+          },
         },
         select: { id: true },
       }),
       prisma.category.findFirst({
         where: {
           id: input.profileCategoryId,
+          householdId,
           kind: CategoryKind.PROFILE,
           type: TransactionType.EXPENSE,
+          ...(keepingProfileCategory ? {} : { archivedAt: null }),
         },
         select: { id: true },
       }),

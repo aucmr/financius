@@ -1,4 +1,5 @@
 import { Prisma } from "@/prisma/generated/client";
+import { CategoryKind, TransactionType } from "@/prisma/generated/enums";
 
 import {
   findExpenseOptions,
@@ -29,7 +30,38 @@ export type ImportSuggestionCandidate = {
 export async function findImportSuggestionCandidates(householdId: string) {
   const prisma = await getPrisma();
   return prisma.expense.findMany({
-    where: { householdId },
+    where: {
+      householdId,
+      areaCategory: {
+        is: {
+          householdId,
+          kind: CategoryKind.AREA,
+          type: TransactionType.EXPENSE,
+          archivedAt: null,
+        },
+      },
+      areaSubcategory: {
+        is: {
+          archivedAt: null,
+          areaCategory: {
+            is: {
+              householdId,
+              kind: CategoryKind.AREA,
+              type: TransactionType.EXPENSE,
+              archivedAt: null,
+            },
+          },
+        },
+      },
+      profileCategory: {
+        is: {
+          householdId,
+          kind: CategoryKind.PROFILE,
+          type: TransactionType.EXPENSE,
+          archivedAt: null,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
     take: 2000,
     select: {

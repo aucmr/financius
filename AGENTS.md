@@ -84,10 +84,19 @@ available for Prisma commands and database-backed integration tests.
 ### Prisma and database
 
 - `npm run prisma:generate`: regenerates the Prisma Client from the schema.
-- `npm run prisma:migrate -- --name <name>`: creates and applies a development migration.
+- `npm run prisma:migrate -- --name <name>`: runs `prisma migrate dev`; in local development, it creates a migration from schema changes and applies pending migrations to the configured database.
+- `npx prisma migrate deploy`: applies existing migration files that are pending. It does not create a migration or reconcile a checksum mismatch.
 - `npx prisma migrate status`: reports migration status against the configured database.
 - `npx prisma validate`: validates the Prisma schema and configuration.
 - `npm run prisma:seed`: applies the idempotent catalog seed.
+
+#### Required migration workflow
+
+- Prisma Client generation is not a database migration. For every `schema.prisma` change that affects the database, create and apply a migration before considering the change complete.
+- For a new migration in local development, run `npm run prisma:migrate -- --name <descriptive_name>`. Review the generated SQL and confirm the command applied it to the configured database.
+- If the migration file already exists and is reviewed, apply it with `npx prisma migrate deploy` rather than creating a duplicate migration. Use `migrate deploy` for staging and production; do not use `migrate dev` against those environments.
+- After applying the migration, run `npm run prisma:generate` and `npx prisma migrate status`, then run the relevant tests. A clean `migrate status` does not resolve a separate checksum error from `migrate dev`.
+- If Prisma reports that an already-applied migration was modified, reports a checksum mismatch or drift, or asks to reset the database, stop. Do not run `prisma migrate reset`, edit an applied migration, or modify `_prisma_migrations` to bypass the error. Compare the migration with Git and restore the exact version that was applied if it can be identified. If not, preserve the database and report the issue for safe reconciliation; do not silently skip migration verification.
 
 ### Git
 

@@ -106,10 +106,12 @@ async function assertReferences(
   context: AuthContext,
   values: PersistedExpenseValues,
   repository: ExpenseRepository,
+  existingExpenseId?: string,
 ) {
   const references = await repository.findExpenseReferences(
     context.householdId,
     values,
+    existingExpenseId,
   );
 
   if (!references.areaCategory) {
@@ -159,7 +161,7 @@ export async function updateExpense(
   repository: ExpenseRepository = defaultRepository,
 ) {
   const persistedValues = toPersistedValues(values, true);
-  await assertReferences(context, persistedValues, repository);
+  await assertReferences(context, persistedValues, repository, id);
 
   const updated = await repository.updateExpense(
     context.householdId,
@@ -187,6 +189,9 @@ export async function deleteExpense(
 }
 
 export function mapExpense(record: ExpenseRecord) {
+  const { archivedAt: areaCategoryArchivedAt, ...areaCategory } =
+    record.areaCategory;
+
   return {
     id: record.id,
     description: record.description,
@@ -200,7 +205,10 @@ export function mapExpense(record: ExpenseRecord) {
     notes: record.notes,
     recurring: record.recurring,
     shared: record.shared,
-    areaCategory: record.areaCategory,
+    areaCategory: {
+      ...areaCategory,
+      isArchived: areaCategoryArchivedAt !== null,
+    },
     areaSubcategory: record.areaSubcategory,
     profileCategory: record.profileCategory,
     creator: record.user,

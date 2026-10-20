@@ -13,11 +13,24 @@ function mapOptions(
   options: Awaited<ReturnType<typeof findExpenseOptions>>,
 ): ExpenseOptions {
   return {
-    areaCategories: options.areaCategories.map((category) => ({
-      ...category,
-      subcategories: category.areaSubcategories,
-    })),
-    profileCategories: options.profileCategories,
+    areaCategories: options.areaCategories.map(
+      ({ areaSubcategories, archivedAt, ...category }) => ({
+        ...category,
+        isArchived: archivedAt !== null,
+        subcategories: areaSubcategories.map(
+          ({ archivedAt: subcategoryArchivedAt, ...subcategory }) => ({
+            ...subcategory,
+            isArchived: subcategoryArchivedAt !== null,
+          }),
+        ),
+      }),
+    ),
+    profileCategories: options.profileCategories.map(
+      ({ archivedAt, ...category }) => ({
+        ...category,
+        isArchived: archivedAt !== null,
+      }),
+    ),
     members: options.members,
   };
 }
@@ -44,8 +57,17 @@ export async function getExpensePageData(requestedMonth: unknown) {
 
 export async function getExpenseFormData(id?: string) {
   const context = await getAuthContext();
-  const options = await findExpenseOptions(context.householdId);
   const expense = id ? await getExpenseForEdit(context, id) : null;
+  const options = await findExpenseOptions(
+    context.householdId,
+    expense
+      ? {
+          areaCategoryId: expense.areaCategory.id,
+          areaSubcategoryId: expense.areaSubcategory.id,
+          profileCategoryId: expense.profileCategory.id,
+        }
+      : undefined,
+  );
 
   const initialValues: ExpenseFormValues | null = expense
     ? {

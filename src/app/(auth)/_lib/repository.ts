@@ -1,4 +1,5 @@
 import { prisma } from "@/src/lib/db/prisma";
+import { ensureDefaultExpenseCategories } from "@/src/lib/categories/defaults";
 
 export type AuthUser = {
   id: string;
@@ -26,7 +27,7 @@ export const authUserRepository: AuthUserRepository = {
     return prisma.$transaction(async (transaction) => {
       const user = await transaction.user.create({ data: input });
 
-      await transaction.household.create({
+      const household = await transaction.household.create({
         data: {
           name: `${user.name}'s household`,
           members: {
@@ -35,7 +36,9 @@ export const authUserRepository: AuthUserRepository = {
             },
           },
         },
+        select: { id: true },
       });
+      await ensureDefaultExpenseCategories(transaction, household.id);
 
       return user;
     });

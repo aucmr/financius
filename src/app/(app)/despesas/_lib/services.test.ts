@@ -110,6 +110,11 @@ describe("expense service", () => {
       "expense-id",
       expect.objectContaining({ amount: "100.50" }),
     );
+    expect(repository.findExpenseReferences).toHaveBeenCalledWith(
+      "household-id",
+      expect.objectContaining({ areaCategoryId: "area-id" }),
+      "expense-id",
+    );
     expect(repository.deleteExpense).toHaveBeenCalledWith(
       "household-id",
       "expense-id",

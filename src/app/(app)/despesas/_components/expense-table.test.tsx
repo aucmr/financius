@@ -39,6 +39,8 @@ const expense: ExpenseListItem = {
         name: "Casa",
         color: "#2f855a",
         icon: null,
+        sortOrder: 0,
+        isArchived: false,
     },
     areaSubcategory: {
         id: "subcategory-1",
@@ -47,6 +49,8 @@ const expense: ExpenseListItem = {
     profileCategory: {
         id: "profile-1",
         name: "CustoFixo",
+        color: "#0000ff",
+        icon: null,
     },
     creator: {
         id: "member-1",
@@ -133,5 +137,56 @@ describe("ExpenseTable", () => {
         expect(within(mobileView).getByText("Responsável: Ana")).toBeInTheDocument();
         expect(within(mobileView).getByText("Compartilhada")).toBeInTheDocument();
         expect(within(mobileView).getByText("12/07")).toBeInTheDocument();
+    });
+
+    it("orders category groups by their household order", () => {
+        const secondExpense: ExpenseListItem = {
+            ...expense,
+            id: "expense-2",
+            description: "Conta de luz",
+            areaCategory: {
+                id: "area-2",
+                name: "Alimentação",
+                color: "#d97706",
+                icon: null,
+                sortOrder: 1,
+                isArchived: false,
+            },
+        };
+        const archivedExpense: ExpenseListItem = {
+            ...expense,
+            id: "expense-3",
+            description: "Despesa antiga",
+            areaCategory: {
+                ...expense.areaCategory,
+                id: "area-archived",
+                name: "Antiga",
+                isArchived: true,
+            },
+        };
+        render(
+            <ExpenseTable
+                expenses={[
+                    secondExpense,
+                    {
+                        ...expense,
+                        areaCategory: { ...expense.areaCategory, sortOrder: 0 },
+                    },
+                    archivedExpense,
+                ]}
+            />,
+        );
+        const mobileView = within(
+            screen.getByRole("region", { name: "Lista compacta de lançamentos" }),
+        );
+        const categoryButtons = mobileView.getAllByRole("button", {
+            name: /Expandir categoria/,
+        });
+
+        expect(categoryButtons.map((button) => button.getAttribute("aria-label"))).toEqual([
+            "Expandir categoria Casa",
+            "Expandir categoria Alimentação",
+            "Expandir categoria Antiga",
+        ]);
     });
 });

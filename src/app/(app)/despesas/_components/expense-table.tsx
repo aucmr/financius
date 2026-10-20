@@ -6,6 +6,7 @@ import { ChevronRightIcon, PencilIcon, PlusIcon, ReceiptTextIcon } from "lucide-
 
 import { DeleteExpenseButton } from "@/src/app/(app)/despesas/_components/delete-expense-button";
 import type { ExpenseListItem } from "@/src/app/(app)/despesas/_lib/types";
+import { CategoryIcon } from "@/src/components/category-icon";
 import { Badge } from "@/src/components/ui/badge";
 import { Button, buttonVariants } from "@/src/components/ui/button";
 import { Card, CardContent } from "@/src/components/ui/card";
@@ -25,6 +26,9 @@ type ExpenseSubcategoryGroup = {
 type ExpenseCategoryGroup = {
     name: string;
     color: string;
+    icon: string | null;
+    sortOrder: number;
+    isArchived: boolean;
     subcategories: Map<string, ExpenseSubcategoryGroup>;
 };
 
@@ -50,6 +54,9 @@ function groupExpenses(expenses: ExpenseListItem[]) {
         const area = groups.get(expense.areaCategory.id) ?? {
             name: expense.areaCategory.name,
             color: expense.areaCategory.color,
+            icon: expense.areaCategory.icon,
+            sortOrder: expense.areaCategory.sortOrder,
+            isArchived: expense.areaCategory.isArchived,
             subcategories: new Map(),
         };
         const subcategory = area.subcategories.get(expense.areaSubcategory.id) ?? {
@@ -63,6 +70,20 @@ function groupExpenses(expenses: ExpenseListItem[]) {
     }
 
     return groups;
+}
+
+function getOrderedCategoryGroups(groups: Map<string, ExpenseCategoryGroup>) {
+      return Array.from(groups.entries()).sort(([, left], [, right]) =>
+          Number(left.isArchived) - Number(right.isArchived) ||
+          left.sortOrder - right.sortOrder ||
+          left.name.localeCompare(right.name, "pt-BR"),
+      );
+}
+
+function getOrderedSubcategoryGroups(area: ExpenseCategoryGroup) {
+      return Array.from(area.subcategories.entries()).sort(([, left], [, right]) =>
+          left.name.localeCompare(right.name, "pt-BR"),
+      );
 }
 
 function getExpenseTotal(expenses: ExpenseListItem[]) {
@@ -158,6 +179,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
     }
 
     const groups = groupExpenses(expenses);
+    const orderedGroups = getOrderedCategoryGroups(groups);
 
     return (
         <Card>
@@ -175,7 +197,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {Array.from(groups.entries()).map(([areaId, area]) => {
+                            {orderedGroups.map(([areaId, area]) => {
                                 const areaTotal = getCategoryTotal(area);
                                 const areaExpanded = expandedCategories.has(areaId);
 
@@ -196,9 +218,10 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                                                         className={cn("transition-transform", areaExpanded && "rotate-90")}
                                                         aria-hidden="true"
                                                     />
-                                                    <span
-                                                        className="me-2 inline-block size-2 rounded-full align-middle"
-                                                        style={{ backgroundColor: area.color }}
+                                                    <CategoryIcon
+                                                        name={area.icon}
+                                                        data-icon="inline-start"
+                                                        style={{ color: area.color }}
                                                         aria-hidden="true"
                                                     />
                                                     {area.name}
@@ -209,7 +232,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                                             </TableHead>
                                             <TableHead />
                                         </TableRow>
-                                        {areaExpanded && Array.from(area.subcategories.entries()).map(([subcategoryId, subcategory]) => {
+                                        {areaExpanded && getOrderedSubcategoryGroups(area).map(([subcategoryId, subcategory]) => {
                                             const subcategoryTotal = getExpenseTotal(subcategory.expenses);
                                             const subcategoryKey = `${areaId}:${subcategoryId}`;
                                             const subcategoryExpanded = expandedSubcategories.has(subcategoryKey);
@@ -262,7 +285,15 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                                                                 </div>
                                                             </TableCell>
                                                             <TableCell className="text-sm text-muted-foreground">
-                                                                {expense.profileCategory.name}
+                                                                <span className="flex items-center gap-2">
+                                                                    <CategoryIcon
+                                                                        name={expense.profileCategory.icon}
+                                                                        className="size-4"
+                                                                        style={{ color: expense.profileCategory.color }}
+                                                                        aria-hidden="true"
+                                                                    />
+                                                                    {expense.profileCategory.name}
+                                                                </span>
                                                             </TableCell>
                                                             <TableCell className="text-sm text-muted-foreground">
                                                                 {expense.responsibleUser.name}
@@ -291,7 +322,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                     aria-label="Lista compacta de lançamentos"
                 >
                     <ul className="divide-y divide-border">
-                        {Array.from(groups.entries()).map(([areaId, area]) => {
+                        {orderedGroups.map(([areaId, area]) => {
                             const areaExpanded = expandedCategories.has(areaId);
 
                             return (
@@ -311,9 +342,10 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                                                     className={cn("transition-transform", areaExpanded && "rotate-90")}
                                                     aria-hidden="true"
                                                 />
-                                                <span
-                                                    className="size-2 shrink-0 rounded-full"
-                                                    style={{ backgroundColor: area.color }}
+                                                <CategoryIcon
+                                                    name={area.icon}
+                                                    data-icon="inline-start"
+                                                    style={{ color: area.color }}
                                                     aria-hidden="true"
                                                 />
                                                 <span className="min-w-0 break-words">{area.name}</span>
@@ -325,7 +357,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                                     </div>
                                     {areaExpanded && (
                                         <ul className="divide-y divide-border">
-                                            {Array.from(area.subcategories.entries()).map(([subcategoryId, subcategory]) => {
+                                            {getOrderedSubcategoryGroups(area).map(([subcategoryId, subcategory]) => {
                                                 const subcategoryKey = `${areaId}:${subcategoryId}`;
                                                 const subcategoryExpanded = expandedSubcategories.has(subcategoryKey);
 
@@ -385,7 +417,13 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                                                                             </div>
                                                                         </div>
                                                                         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                                                            <span>
+                                                                            <span className="flex items-center gap-1">
+                                                                                <CategoryIcon
+                                                                                    name={expense.profileCategory.icon}
+                                                                                    className="size-3.5"
+                                                                                    style={{ color: expense.profileCategory.color }}
+                                                                                    aria-hidden="true"
+                                                                                />
                                                                                 Perfil: {expense.profileCategory.name}
                                                                             </span>
                                                                             <span>
