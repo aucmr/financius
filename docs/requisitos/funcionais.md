@@ -44,7 +44,9 @@ Lista de requisitos do sistema Financius
 
 ## Importação de faturas e extratos
 
-- A aplicação aceita arquivos CSV dos formatos XP, BTG e Banco do Brasil (BB). O delimitador de vírgula ou ponto e vírgula é detectado automaticamente; arquivos UTF-8, UTF-16 com BOM e Windows-1252 são aceitos.
+- A aplicação aceita arquivos CSV dos formatos XP e Banco do Brasil (BB), e arquivos XLSX protegidos por senha para BTG. O delimitador de vírgula ou ponto e vírgula é detectado automaticamente nos CSVs; arquivos UTF-8, UTF-16 com BOM e Windows-1252 são aceitos.
+- A senha da fatura BTG é solicitada a cada importação, usada somente no navegador para abrir o XLSX e descartada; não é persistida nem enviada ao servidor.
+- Quando o XLSX BTG contém tabelas de resumo e de lançamentos, a importação prioriza a tabela com mais colunas de detalhamento da compra para evitar selecionar resumos.
 - XP e BTG representam faturas de cartão. A competência da fatura é informada manualmente no início do fluxo e é persistida em `Expense.date`; a data original da compra é persistida em `creditCardTransactionDate`.
 - BB representa extrato bancário. A data de cada lançamento é usada em `Expense.date`, sem `creditCardTransactionDate`.
 - Na v1 são importados somente lançamentos de saída do BB. Créditos, pagamentos de fatura e linhas de saldo são ignorados conforme o tipo identificado no arquivo.
@@ -57,4 +59,4 @@ Lista de requisitos do sistema Financius
 - Duplicidades são exibidas como aviso por linha, usando fingerprint da linha e combinação de descrição, valor e datas. A pessoa pode confirmar a importação da linha duplicada ou pulá-la; uma duplicidade não bloqueia as demais linhas do arquivo.
 - O sistema registra um lote de importação com arquivo, origem, fingerprint do arquivo, competência, status e contadores de linhas importadas, ignoradas, puladas e com falha. Cada despesa importada mantém o lote, número da linha, fingerprint e metadados técnicos de origem.
 - A listagem mensal identifica despesas importadas e, para lançamentos de cartão, mostra a data original da compra separada da competência mensal.
-- Limitações da v1: somente os três layouts CSV suportados são reconhecidos; a competência de XP/BTG depende da informação manual; a revisão é individual por linha; não há importação de receitas nem sincronização automática com instituições financeiras.
+- Limitações da v1: somente os layouts CSV de XP/BB e o layout XLSX protegido do BTG são reconhecidos; a competência de XP/BTG depende da informação manual; a revisão é individual por linha; não há importação de receitas nem sincronização automática com instituições financeiras.

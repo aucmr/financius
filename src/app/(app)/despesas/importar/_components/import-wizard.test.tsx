@@ -13,12 +13,17 @@ import {
 } from "@/src/app/(app)/despesas/importar/actions";
 import { ImportWizard } from "@/src/app/(app)/despesas/importar/_components/import-wizard";
 import type { ExpenseOptions } from "@/src/app/(app)/despesas/_lib/types";
+import { normalizeBtgXlsx } from "@/src/lib/imports/btg-xlsx";
 
 vi.mock("@/src/app/(app)/despesas/importar/actions", () => ({
     createImportBatchAction: vi.fn(),
     getImportDuplicateMatchesAction: vi.fn(),
     getImportSuggestionsAction: vi.fn(),
     parseImportAction: vi.fn(),
+}));
+
+vi.mock("@/src/lib/imports/btg-xlsx", () => ({
+    normalizeBtgXlsx: vi.fn(),
 }));
 
 const options: ExpenseOptions = {
@@ -50,10 +55,10 @@ const options: ExpenseOptions = {
 
 const csvContent = "Data;Estabelecimento;Portador;Valor;Parcela\n01/08/2026;LOJA;ANA;R$ 10,00;-";
 
-function parsedRow(rowNumber: number, description: string) {
+function parsedRow(rowNumber: number, description: string, source: "XP" | "BTG" = "XP") {
     return {
         rowNumber,
-        source: "XP" as const,
+        source,
         description,
         amount: "10.00",
         transactionDate: "2026-08-01",
@@ -214,5 +219,54 @@ describe("ImportWizard review navigation", () => {
             "Farmacia",
         ]);
         expect(submitted.skippedRows).toBe(0);
+    });
+});
+
+describe("ImportWizard BTG XLSX import", () => {
+    it("opens the protected workbook in the browser and does not send its password to the server", async () => {
+        const fileContent = [
+            '"Data";"Descricao";"Valor";"Tipo de compra";"Codigo de autorizacao";"Final Cartao";"__source_row"',
+            '"25/01/2026";"Loja de teste";"52.36";"Compra à vista";"AUTH01";"5250";"4"',
+        ].join("\n");
+        vi.mocked(normalizeBtgXlsx).mockResolvedValue(fileContent);
+        vi.mocked(parseImportAction).mockResolvedValue({
+            ok: true,
+            message: "Arquivo lido.",
+            data: {
+                source: "BTG",
+                fileName: "fatura.xlsx",
+                fileFingerprint: "b".repeat(64),
+                statementDate: "2026-08-10",
+                ignoredRows: [],
+                rows: [parsedRow(4, "Loja de teste", "BTG")],
+            },
+        });
+
+        render(<ImportWizard householdName="Casa" options={options} />);
+        fireEvent.click(screen.getByRole("button", { name: /BTG/ }));
+        fireEvent.change(screen.getByLabelText(/Competencia da fatura/), {
+            target: { value: "2026-08-10" },
+        });
+
+        const file = new File(["encrypted workbook"], "fatura.xlsx", {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        const fileInput = screen.getByLabelText("Arquivo XLSX BTG");
+        expect(fileInput).toHaveAttribute("accept", expect.stringContaining(".xlsx"));
+        fireEvent.change(fileInput, { target: { files: [file] } });
+        fireEvent.change(screen.getByLabelText("Senha da fatura BTG"), {
+            target: { value: "synthetic-password" },
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: "Ler e revisar" }));
+        await screen.findByText("Confirme cada lançamento");
+
+        expect(normalizeBtgXlsx).toHaveBeenCalledWith(file, "synthetic-password");
+        expect(parseImportAction).toHaveBeenCalledWith({
+            source: "BTG",
+            fileName: "fatura.xlsx",
+            content: fileContent,
+            statementDate: "2026-08-10",
+        });
     });
 });

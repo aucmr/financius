@@ -32,6 +32,7 @@ import {
   type ImportSource,
   type ParsedImportRow,
 } from "@/src/lib/imports";
+import { normalizeBtgXlsx } from "@/src/lib/imports/btg-xlsx";
 
 const sourceLabels: Record<ImportSource, string> = {
   XP: "XP",
@@ -112,6 +113,8 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
   const [responsibleUserId, setResponsibleUserId] = useState(options.members[0]?.id ?? "");
   const [fileName, setFileName] = useState("");
   const [fileContent, setFileContent] = useState("");
+  const [btgWorkbookFile, setBtgWorkbookFile] = useState<File | null>(null);
+  const [filePassword, setFilePassword] = useState("");
   const [detectedSource, setDetectedSource] = useState<ImportSource | null>(null);
   const [parseData, setParseData] = useState<ParseImportData | null>(null);
   const [rows, setRows] = useState<ReviewRow[]>([]);
@@ -277,9 +280,53 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
     });
   }
 
+  function handleSourceChange(nextSource: ImportSource) {
+    setSource(nextSource);
+    setFileName("");
+    setFileContent("");
+    setBtgWorkbookFile(null);
+    setFilePassword("");
+    setDetectedSource(null);
+    setError("");
+  }
+
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    event.currentTarget.value = "";
+
+    setFileName("");
+    setFileContent("");
+    setBtgWorkbookFile(null);
+    setFilePassword("");
+    setDetectedSource(null);
+    setError("");
+
     if (!file) {
+      return;
+    }
+
+    if (!source) {
+      setError("Selecione a instituicao antes de escolher o arquivo.");
+      return;
+    }
+
+    if (source === "BTG") {
+      if (!file.name.toLowerCase().endsWith(".xlsx")) {
+        setError("Para o BTG, selecione um arquivo XLSX.");
+        return;
+      }
+      if (file.size > 5_000_000) {
+        setError("O XLSX deve ter no maximo 5 MB.");
+        return;
+      }
+
+      setBtgWorkbookFile(file);
+      setFileName(file.name);
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setError("Para esta instituicao, selecione um arquivo CSV.");
       return;
     }
 
@@ -298,45 +345,77 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
   }
 
   async function handleStartReview() {
-    if (!source || !fileName || !fileContent || !responsibleUserId) {
-      setError("Selecione a instituicao, o responsavel e um arquivo CSV.");
+    if (!source || !fileName || !responsibleUserId) {
+      setError("Selecione a instituicao, o responsavel e um arquivo.");
+      return;
+    }
+    if (source === "BTG" && !btgWorkbookFile) {
+      setError("Selecione o arquivo XLSX da fatura BTG.");
+      return;
+    }
+    if (source !== "BTG" && !fileContent) {
+      setError("Selecione o arquivo CSV da fatura ou extrato.");
+      return;
+    }
+    if (source === "BTG" && !filePassword) {
+      setError("Informe a senha da fatura BTG.");
       return;
     }
     if ((source === "XP" || source === "BTG") && !statementDate) {
       setError("Informe a competencia da fatura.");
       return;
     }
-    if (detectedSource && detectedSource !== source) {
+    if (source !== "BTG" && detectedSource && detectedSource !== source) {
       setError(`O arquivo parece ser da ${sourceLabels[detectedSource]}.`);
       return;
     }
 
     setIsLoading(true);
     setError("");
-    const response = await parseImportAction({
-      source,
-      fileName,
-      content: fileContent,
-      statementDate: statementDate || null,
-    });
-    setIsLoading(false);
 
-    if (!response.ok || !response.data) {
-      setError(response.message);
-      return;
-    }
-    if (response.data.rows.length === 0) {
-      setError("Nenhuma linha de despesa valida foi encontrada.");
-      return;
-    }
+    try {
+      let content = fileContent;
+      if (source === "BTG") {
+        if (!btgWorkbookFile) {
+          throw new Error("Selecione o arquivo XLSX da fatura BTG.");
+        }
+        content = await normalizeBtgXlsx(btgWorkbookFile, filePassword);
+      }
+      const response = await parseImportAction({
+        source,
+        fileName,
+        content,
+        statementDate: statementDate || null,
+      });
 
-    setParseData(response.data);
-    setIgnoredRows(response.data.ignoredRows);
-    setRows(response.data.rows.map((row) => createReviewRow(row, responsibleUserId)));
-    setRowDecisions(response.data.rows.map(() => "pending"));
-    setCurrentIndex(0);
-    setStep("review");
-    setLoadedHelperKey("");
+      if (!response.ok || !response.data) {
+        setError(response.message);
+        return;
+      }
+      if (response.data.rows.length === 0) {
+        setError("Nenhuma linha de despesa valida foi encontrada.");
+        return;
+      }
+
+      setParseData(response.data);
+      setIgnoredRows(response.data.ignoredRows);
+      setRows(response.data.rows.map((row) => createReviewRow(row, responsibleUserId)));
+      setRowDecisions(response.data.rows.map(() => "pending"));
+      setCurrentIndex(0);
+      setStep("review");
+      setLoadedHelperKey("");
+      setFileContent("");
+      setBtgWorkbookFile(null);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel ler o arquivo.",
+      );
+    } finally {
+      setFilePassword("");
+      setIsLoading(false);
+    }
   }
 
   function validateCurrentRow() {
@@ -432,6 +511,8 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
     setStatementDate("");
     setFileName("");
     setFileContent("");
+    setBtgWorkbookFile(null);
+    setFilePassword("");
     setDetectedSource(null);
     setParseData(null);
     setRows([]);
@@ -653,18 +734,18 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
       <header className="flex flex-col items-start gap-2">
         <Badge variant="secondary">Importacao</Badge>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Importar fatura ou extrato</h1>
-        <p className="max-w-2xl text-base text-muted-foreground">Leia um arquivo CSV, revise as classificacoes sugeridas e registre as despesas no household {householdName}.</p>
+        <p className="max-w-2xl text-base text-muted-foreground">Leia o arquivo da instituicao, revise as classificacoes sugeridas e registre as despesas no household {householdName}.</p>
       </header>
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Configurar arquivo</CardTitle>
-          <CardDescription>Formatos suportados: XP, BTG e Banco do Brasil.</CardDescription>
+          <CardDescription>BTG: XLSX protegido por senha. XP e Banco do Brasil: CSV.</CardDescription>
         </CardHeader>
         <CardContent>
           <FieldGroup>
             <div className="grid gap-3 sm:grid-cols-3">
               {(Object.keys(sourceLabels) as ImportSource[]).map((item) => (
-                <Button key={item} type="button" variant={source === item ? "default" : "secondary"} className="h-14 justify-start gap-3" onClick={() => setSource(item)}>
+                <Button key={item} type="button" variant={source === item ? "default" : "secondary"} className="h-14 justify-start gap-3" onClick={() => handleSourceChange(item)} disabled={isLoading}>
                   <LandmarkIcon aria-hidden="true" />
                   <span className="text-left"><span className="block font-semibold">{sourceLabels[item]}</span><span className="block text-xs opacity-70">{item === "BB" ? "Extrato bancario" : "Fatura de cartao"}</span></span>
                 </Button>
@@ -686,10 +767,34 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
               </Field>
             </div>
             <Field>
-              <FieldLabel htmlFor="import-file">Arquivo CSV</FieldLabel>
-              <Input id="import-file" type="file" accept=".csv,text/csv" onChange={handleFileChange} />
+              <FieldLabel htmlFor="import-file">{source === "BTG" ? "Arquivo XLSX BTG" : "Arquivo CSV"}</FieldLabel>
+              <Input
+                key={source}
+                id="import-file"
+                type="file"
+                accept={source === "BTG" ? ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : ".csv,text/csv"}
+                onChange={handleFileChange}
+                disabled={!source || isLoading}
+              />
               {fileName && <FieldDescription>{fileName} carregado{detectedSource ? ` · formato detectado: ${sourceLabels[detectedSource]}` : ""}</FieldDescription>}
             </Field>
+            {source === "BTG" && (
+              <Field>
+                <FieldLabel htmlFor="import-file-password">Senha da fatura BTG</FieldLabel>
+                <Input
+                  id="import-file-password"
+                  type="password"
+                  autoComplete="off"
+                  inputMode="numeric"
+                  value={filePassword}
+                  onChange={(event) => setFilePassword(event.target.value)}
+                  disabled={!btgWorkbookFile || isLoading}
+                />
+                <FieldDescription>
+                  Usada somente no navegador para abrir o XLSX; nao sera salva.
+                </FieldDescription>
+              </Field>
+            )}
             <Alert>
               <ShieldCheckIcon aria-hidden="true" />
               <AlertDescription>A importacao nao grava nada nesta etapa. Cada linha sera revisada, categorizada e confirmada antes do salvamento.</AlertDescription>

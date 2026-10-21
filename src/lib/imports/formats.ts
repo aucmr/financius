@@ -135,6 +135,19 @@ function parseXp(content: string, statementDate: string): ParsedImport {
   return { source: "XP", rows: parsedRows, ignoredRows, statementDate };
 }
 
+function parseBtgDate(value: string, statementYear: number) {
+  const normalizedValue = value.trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+    return parseDateOnly(normalizedValue);
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalizedValue)) {
+    return parseBrazilianDate(normalizedValue);
+  }
+
+  return parseDayMonth(normalizedValue, statementYear);
+}
+
 function parseBtg(content: string, statementDate: string): ParsedImport {
   assertRequiredHeaders(content, [
     "Data",
@@ -148,6 +161,11 @@ function parseBtg(content: string, statementDate: string): ParsedImport {
   const statementYear = Number(statementDate.slice(0, 4));
 
   for (const row of rows) {
+    const sourceRowNumber = Number(getColumn(row.values, ["__source_row"]));
+    const rowNumber =
+      Number.isSafeInteger(sourceRowNumber) && sourceRowNumber > 0
+        ? sourceRowNumber
+        : row.rowNumber;
     const originalDescription = cleanDescription(
       getColumn(row.values, ["Descricao"]),
     );
@@ -161,7 +179,7 @@ function parseBtg(content: string, statementDate: string): ParsedImport {
     if (normalizedDescription.includes("pagamentos validos normais")) {
       addIgnored(
         ignoredRows,
-        { ...row, description, amount },
+        { ...row, rowNumber, description, amount },
         "BTG",
         "card_payment",
       );
@@ -178,11 +196,11 @@ function parseBtg(content: string, statementDate: string): ParsedImport {
       );
       const parcelText = `${originalDescription} ${purchaseType}`;
       parsedRows.push({
-        rowNumber: row.rowNumber,
+        rowNumber,
         source: "BTG",
         description,
         amount,
-        transactionDate: parseDayMonth(
+        transactionDate: parseBtgDate(
           getColumn(row.values, ["Data"]),
           statementYear,
         ),
@@ -203,7 +221,7 @@ function parseBtg(content: string, statementDate: string): ParsedImport {
     } catch {
       addIgnored(
         ignoredRows,
-        { ...row, description, amount },
+        { ...row, rowNumber, description, amount },
         "BTG",
         "invalid_row",
       );
