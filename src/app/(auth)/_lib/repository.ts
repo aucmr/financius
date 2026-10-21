@@ -16,12 +16,21 @@ export type CreateAuthUserInput = {
 
 export type AuthUserRepository = {
   findByEmail: (email: string) => Promise<AuthUser | null>;
+  findById: (id: string) => Promise<AuthUser | null>;
   create: (input: CreateAuthUserInput) => Promise<AuthUser>;
+  replacePasswordHash: (
+    id: string,
+    expectedPasswordHash: string,
+    passwordHash: string,
+  ) => Promise<boolean>;
 };
 
 export const authUserRepository: AuthUserRepository = {
   async findByEmail(email) {
     return prisma.user.findUnique({ where: { email } });
+  },
+  async findById(id) {
+    return prisma.user.findUnique({ where: { id } });
   },
   async create(input) {
     return prisma.$transaction(async (transaction) => {
@@ -42,5 +51,13 @@ export const authUserRepository: AuthUserRepository = {
 
       return user;
     });
+  },
+  async replacePasswordHash(id, expectedPasswordHash, passwordHash) {
+    const result = await prisma.user.updateMany({
+      where: { id, passwordHash: expectedPasswordHash },
+      data: { passwordHash },
+    });
+
+    return result.count === 1;
   },
 };

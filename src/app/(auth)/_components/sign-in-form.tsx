@@ -33,7 +33,7 @@ export function SignInForm() {
         });
 
         if (!result || result.error) {
-            toast.error("Invalid email or password.");
+            toast.error("E-mail ou senha inválidos.");
             return;
         }
 
@@ -45,36 +45,38 @@ export function SignInForm() {
     return (
         <Card className="w-full">
             <CardHeader>
-                <CardTitle className="text-2xl">Sign In</CardTitle>
-                <CardDescription>Access your account using your registered credentials.</CardDescription>
+                <CardTitle className="text-2xl">Entrar no Financius</CardTitle>
+                <CardDescription>
+                    Acesse sua conta para acompanhar as despesas do casal.
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} noValidate>
                     <FieldGroup>
                         <Field data-invalid={errors.email ? true : undefined}>
-                            <FieldLabel htmlFor="email">Email</FieldLabel>
+                            <FieldLabel htmlFor="email">E-mail</FieldLabel>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="you@example.com"
+                                placeholder="voce@exemplo.com"
                                 aria-invalid={errors.email ? true : undefined}
                                 {...register("email")}
                             />
                             {errors.email?.message ? <FieldError>{errors.email.message}</FieldError> : null}
                         </Field>
                         <Field data-invalid={errors.password ? true : undefined}>
-                            <FieldLabel htmlFor="password">Password</FieldLabel>
+                            <FieldLabel htmlFor="password">Senha</FieldLabel>
                             <Input
                                 id="password"
                                 type="password"
-                                placeholder="At least 8 characters"
+                                placeholder="Mínimo de 8 caracteres"
                                 aria-invalid={errors.password ? true : undefined}
                                 {...register("password")}
                             />
                             {errors.password?.message ? <FieldError>{errors.password.message}</FieldError> : null}
                         </Field>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "Signing in..." : "Continue"}
+                            {isSubmitting ? "Entrando..." : "Entrar"}
                         </Button>
                     </FieldGroup>
                 </form>

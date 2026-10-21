@@ -12,6 +12,7 @@ import { SidebarNav } from "@/src/app/(app)/_components/sidebar-nav";
 const usePathnameMock = vi.hoisted(() => vi.fn());
 const setThemeMock = vi.hoisted(() => vi.fn());
 const signOutMock = vi.hoisted(() => vi.fn());
+const changePasswordActionMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
     usePathname: usePathnameMock,
@@ -23,6 +24,10 @@ vi.mock("next-themes", () => ({
 
 vi.mock("next-auth/react", () => ({
     signOut: signOutMock,
+}));
+
+vi.mock("@/src/app/(auth)/actions", () => ({
+    changePasswordAction: changePasswordActionMock,
 }));
 
 vi.mock("next/link", () => ({
@@ -158,6 +163,42 @@ describe("Sidebar", () => {
             expect(disclosureIcon).not.toHaveClass("rotate-180");
             expect(accountTrigger).toHaveAttribute("aria-expanded", "false");
         });
+    });
+
+    it("opens the password change dialog from the account menu", async () => {
+        render(
+            <Sidebar
+                collapsed={false}
+                mobileOpen={false}
+                user={{ name: "Ana", email: "ana@example.com" }}
+                onNavigate={vi.fn()}
+            />,
+        );
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: "Abrir menu da conta de Ana",
+            }),
+        );
+        const menu = await screen.findByRole("menu");
+
+        fireEvent.click(
+            within(menu).getByRole("menuitem", { name: "Alterar senha" }),
+        );
+
+        const dialog = await screen.findByRole("dialog", {
+            name: "Alterar senha",
+        });
+        expect(within(dialog).getByLabelText("Senha atual")).toHaveAttribute(
+            "autocomplete",
+            "current-password",
+        );
+        expect(
+            within(dialog).getByLabelText("Nova senha"),
+        ).toHaveAttribute("autocomplete", "new-password");
+        expect(
+            within(dialog).getByLabelText("Confirmar nova senha"),
+        ).toBeInTheDocument();
     });
 
     it("keeps the sidebar independently scrollable", () => {

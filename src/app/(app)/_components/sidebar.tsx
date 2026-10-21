@@ -2,8 +2,15 @@
 
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import { ChevronDownIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
+import {
+    ChevronDownIcon,
+    KeyRoundIcon,
+    MonitorIcon,
+    MoonIcon,
+    SunIcon,
+} from "lucide-react";
 
+import { ChangePasswordDialog } from "@/src/app/(app)/_components/change-password-dialog";
 import { FinanciusLogo } from "@/src/app/(app)/_components/financius-logo";
 import { SidebarNav } from "@/src/app/(app)/_components/sidebar-nav";
 import { SignOutButton } from "@/src/app/(auth)/_components/sign-out-button";
@@ -14,6 +21,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
+    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
@@ -47,6 +55,7 @@ export function Sidebar({
 }: SidebarProps) {
     const { theme, setTheme } = useTheme();
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
     return (
         <aside
@@ -143,11 +152,24 @@ export function Sidebar({
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
+                            <DropdownMenuItem
+                                onClick={() => setChangePasswordOpen(true)}
+                            >
+                                <KeyRoundIcon
+                                    data-icon="inline-start"
+                                    aria-hidden="true"
+                                />
+                                Alterar senha
+                            </DropdownMenuItem>
                             <SignOutButton />
                         </DropdownMenuGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
+            <ChangePasswordDialog
+                open={changePasswordOpen}
+                onOpenChange={setChangePasswordOpen}
+            />
         </aside>
     );
 }

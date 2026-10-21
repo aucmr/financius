@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Financius",
-  description: "Finanças compartilhadas para casais",
+  title: "Financius | Controle de gastos para casais",
+  description:
+    "Compartilhem as despesas do casal, acompanhem a divisão por pessoa e importem faturas com sugestões de categoria baseadas no histórico.",
 };
 
 export default function RootLayout({

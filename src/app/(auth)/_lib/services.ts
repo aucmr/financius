@@ -37,6 +37,20 @@ type AuthFailureResult = AuthActionResult & {
 
 export type AuthServiceResult = AuthSuccessResult | AuthFailureResult;
 
+export type ChangeUserPasswordInput = {
+  userId: string;
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type PasswordChangeResult =
+  | { ok: true; message: string }
+  | {
+      ok: false;
+      message: string;
+      field?: "currentPassword" | "newPassword";
+    };
+
 function unauthorizedResult(
   message = "Invalid email or password.",
 ): AuthFailureResult {
@@ -86,4 +100,58 @@ export async function authenticateUser(
   }
 
   return { ok: true, message: "Signed in successfully.", user };
+}
+
+export async function changeUserPassword(
+  input: ChangeUserPasswordInput,
+  repository: AuthUserRepository,
+  passwordService: PasswordService,
+): Promise<PasswordChangeResult> {
+  const user = await repository.findById(input.userId);
+
+  if (!user) {
+    return {
+      ok: false,
+      message: "Não foi possível localizar sua conta. Entre novamente.",
+    };
+  }
+
+  const isCurrentPasswordValid = await passwordService.verify(
+    input.currentPassword,
+    user.passwordHash,
+  );
+
+  if (!isCurrentPasswordValid) {
+    return {
+      ok: false,
+      message: "A senha atual está incorreta.",
+      field: "currentPassword",
+    };
+  }
+
+  if (input.currentPassword === input.newPassword) {
+    return {
+      ok: false,
+      message: "A nova senha deve ser diferente da senha atual.",
+      field: "newPassword",
+    };
+  }
+
+  const passwordHash = await passwordService.hash(input.newPassword);
+  const updated = await repository.replacePasswordHash(
+    user.id,
+    user.passwordHash,
+    passwordHash,
+  );
+
+  if (!updated) {
+    return {
+      ok: false,
+      message:
+        "A senha foi alterada em outra operação. Confira a senha atual e tente novamente.",
+      field: "currentPassword",
+    };
+  }
+
+  return { ok: true, message: "Senha alterada com sucesso." };
 }
