@@ -1,3 +1,5 @@
+import type { ImportSource } from "@/src/lib/imports";
+
 export type ExpenseCategoryOption = {
   id: string;
   name: string;
@@ -79,6 +81,7 @@ export type ExpensePageData = {
   members: ExpenseMemberOption[];
   options: ExpenseOptions;
   expenses: ExpenseListItem[];
+  importedStatements: Record<ImportSource, boolean>;
   totalAmount: string;
   sharedAmount: string;
 };

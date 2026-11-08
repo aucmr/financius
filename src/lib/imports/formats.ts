@@ -235,7 +235,7 @@ function cleanBankDescription(value: string) {
   return cleanDescription(value).replace(/^\d{2}\/\d{2}\s+\d{2}:\d{2}\s+/, "");
 }
 
-function parseBb(content: string): ParsedImport {
+function parseBb(content: string, statementDate: string): ParsedImport {
   assertRequiredHeaders(content, [
     "Data",
     "Lancamento",
@@ -325,7 +325,7 @@ function parseBb(content: string): ParsedImport {
     }
   }
 
-  return { source: "BB", rows: parsedRows, ignoredRows, statementDate: null };
+  return { source: "BB", rows: parsedRows, ignoredRows, statementDate };
 }
 
 export function parseImportCsv(
@@ -337,22 +337,20 @@ export function parseImportCsv(
     return { source, rows: [], ignoredRows: [], statementDate };
   }
 
-  if ((source === "XP" || source === "BTG") && !statementDate) {
-    throw new Error("A statement date is required for credit card imports.");
+  if (!statementDate) {
+    throw new Error("A statement date is required for all imports.");
   }
 
-  if (statementDate) {
-    parseDateOnly(statementDate);
-  }
+  parseDateOnly(statementDate);
 
   assertSource(content, source);
   if (source === "XP") {
-    return parseXp(content, statementDate as string);
+    return parseXp(content, statementDate);
   }
   if (source === "BTG") {
-    return parseBtg(content, statementDate as string);
+    return parseBtg(content, statementDate);
   }
-  return parseBb(content);
+  return parseBb(content, statementDate);
 }
 
 export function detectCsvSource(content: string) {

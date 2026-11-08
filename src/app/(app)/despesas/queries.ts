@@ -1,11 +1,16 @@
 import { getAuthContext } from "@/src/lib/auth/context";
-import { formatDateOnly, normalizeMonth } from "@/src/lib/utils/date";
+import {
+  formatDateOnly,
+  getMonthRange,
+  normalizeMonth,
+} from "@/src/lib/utils/date";
 
 import { findExpenseOptions } from "@/src/app/(app)/despesas/_lib/repository";
 import {
   getExpenseForEdit,
   getExpensesForMonth,
 } from "@/src/app/(app)/despesas/_lib/services";
+import { findImportedStatementBatches } from "@/src/app/(app)/despesas/importar/_lib/repository";
 import type { ExpenseFormValues } from "@/src/app/(app)/despesas/_lib/schemas";
 import type { ExpenseOptions } from "@/src/app/(app)/despesas/_lib/types";
 
@@ -38,9 +43,11 @@ function mapOptions(
 export async function getExpensePageData(requestedMonth: unknown) {
   const context = await getAuthContext();
   const month = normalizeMonth(requestedMonth);
-  const [options, expenses] = await Promise.all([
+  const { start, end } = getMonthRange(month);
+  const [options, expenses, importedBatches] = await Promise.all([
     findExpenseOptions(context.householdId),
     getExpensesForMonth(context, month),
+    findImportedStatementBatches(context.householdId, start, end),
   ]);
 
   return {
@@ -50,6 +57,11 @@ export async function getExpensePageData(requestedMonth: unknown) {
     members: options.members,
     options: mapOptions(options),
     expenses: expenses.expenses,
+    importedStatements: {
+      XP: importedBatches.some(({ source }) => source === "XP"),
+      BTG: importedBatches.some(({ source }) => source === "BTG"),
+      BB: importedBatches.some(({ source }) => source === "BB"),
+    },
     totalAmount: expenses.totals.total.toFixed(2),
     sharedAmount: expenses.totals.shared.toFixed(2),
   };

@@ -2,6 +2,12 @@ export const importSources = ["XP", "BTG", "BB"] as const;
 
 export type ImportSource = (typeof importSources)[number];
 
+export const importSourceLabels: Record<ImportSource, string> = {
+  XP: "XP",
+  BTG: "BTG",
+  BB: "Banco do Brasil",
+};
+
 export type ImportInstallment = {
   current: number;
   total: number;

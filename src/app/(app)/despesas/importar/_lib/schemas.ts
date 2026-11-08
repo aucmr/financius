@@ -30,14 +30,11 @@ export const importParseSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    if (
-      (value.source === "XP" || value.source === "BTG") &&
-      !value.statementDate
-    ) {
+    if (!value.statementDate) {
       context.addIssue({
         code: "custom",
         path: ["statementDate"],
-        message: "Informe a competencia da fatura.",
+        message: "Informe a competencia da fatura ou extrato.",
       });
     }
   });
@@ -103,14 +100,11 @@ export const importBatchSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    if (
-      (value.source === "XP" || value.source === "BTG") &&
-      !value.statementDate
-    ) {
+    if (!value.statementDate) {
       context.addIssue({
         code: "custom",
         path: ["statementDate"],
-        message: "Informe a competencia da fatura.",
+        message: "Informe a competencia da fatura ou extrato.",
       });
     }
 

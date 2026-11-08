@@ -1,4 +1,4 @@
-import { FileUpIcon, ListOrderedIcon, PlusIcon, ReceiptTextIcon, ScaleIcon, type LucideIcon } from "lucide-react";
+import { FileUpIcon, PlusIcon, ReceiptTextIcon, ScaleIcon, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { HouseholdMemberForm } from "@/src/app/(app)/despesas/_components/household-member-form";
@@ -8,6 +8,7 @@ import type { ExpensePageData } from "@/src/app/(app)/despesas/_lib/types";
 import { Badge } from "@/src/components/ui/badge";
 import { buttonVariants } from "@/src/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { importSourceLabels, importSources } from "@/src/lib/imports";
 
 type ExpenseMonthPageProps = {
     data: ExpensePageData;
@@ -33,6 +34,35 @@ function SummaryStat({ icon: Icon, title, value, description }: { icon: LucideIc
             </CardHeader>
         </Card>
     );
+}
+
+function ImportedStatementsSummary({
+      importedStatements,
+}: {
+      importedStatements: ExpensePageData["importedStatements"];
+}) {
+      return (
+          <Card size="sm" className="min-w-0">
+              <CardHeader>
+                  <CardDescription>Faturas e extratos</CardDescription>
+                  <CardTitle className="text-base">Importações do mês</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2">
+                  {importSources.map((source) => {
+                      const isImported = importedStatements[source];
+
+                      return (
+                          <div key={source} className="flex items-center justify-between gap-3">
+                              <span className="text-sm">{importSourceLabels[source]}</span>
+                              <Badge variant={isImported ? "default" : "outline"}>
+                                  {isImported ? "Importada" : "Não importada"}
+                              </Badge>
+                          </div>
+                      );
+                  })}
+              </CardContent>
+          </Card>
+      );
 }
 
 export function ExpenseMonthPage({ data }: ExpenseMonthPageProps) {
@@ -64,7 +94,7 @@ export function ExpenseMonthPage({ data }: ExpenseMonthPageProps) {
             <div className="grid gap-4 sm:grid-cols-3">
                 <SummaryStat icon={ReceiptTextIcon} title="Total do mês" value={formatCurrency(data.totalAmount)} description="Todos os lançamentos" />
                 <SummaryStat icon={ScaleIcon} title="Compartilhadas" value={formatCurrency(data.sharedAmount)} description="Base para a divisão futura" />
-                <SummaryStat icon={ListOrderedIcon} title="Lançamentos" value={data.expenses.length} description="Na competência selecionada" />
+                <ImportedStatementsSummary importedStatements={data.importedStatements} />
             </div>
 
             {canAssociateMember && (

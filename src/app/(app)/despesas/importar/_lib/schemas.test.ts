@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   importBatchSchema,
   importExpenseRowSchema,
+  importParseSchema,
 } from "@/src/app/(app)/despesas/importar/_lib/schemas";
 
 const validRow = {
@@ -41,7 +42,7 @@ describe("import schemas", () => {
     ).toBe(false);
   });
 
-  it("requires a statement date for card batches but not BB", () => {
+  it("requires a statement date for every import source", () => {
     const base = {
       source: "XP" as const,
       fileName: "fatura.csv",
@@ -58,9 +59,26 @@ describe("import schemas", () => {
       importBatchSchema.safeParse({
         ...base,
         source: "BB",
+        statementDate: null,
+        rows: [{ ...validRow, source: "BB" }],
+      }).success,
+    ).toBe(false);
+    expect(
+      importBatchSchema.safeParse({
+        ...base,
+        source: "BB",
+        statementDate: "2026-06-10",
         rows: [{ ...validRow, source: "BB" }],
       }).success,
     ).toBe(true);
+    expect(
+      importParseSchema.safeParse({
+        source: "BB",
+        fileName: "extrato.csv",
+        content: "conteudo",
+        statementDate: null,
+      }).success,
+    ).toBe(false);
   });
 
   it("requires one responsible user for the whole batch", () => {
@@ -69,7 +87,7 @@ describe("import schemas", () => {
         source: "BB",
         fileName: "extrato.csv",
         fileFingerprint: "b".repeat(64),
-        statementDate: null,
+        statementDate: "2026-06-10",
         totalRows: 2,
         ignoredRows: 0,
         skippedRows: 0,

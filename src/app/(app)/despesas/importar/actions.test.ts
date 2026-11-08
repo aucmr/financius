@@ -31,7 +31,7 @@ describe("import actions", () => {
     });
   });
 
-  it("rejects a card import without a statement date before parsing", async () => {
+  it("rejects an import without a statement date before parsing", async () => {
     const result = await parseImportAction({
       source: "XP",
       fileName: "fatura.csv",
@@ -42,7 +42,21 @@ describe("import actions", () => {
 
     expect(result).toMatchObject({
       ok: false,
-      message: "Informe a competencia da fatura.",
+      message: "Informe a competencia da fatura ou extrato.",
+    });
+  });
+
+  it("rejects a BB import without a statement date before parsing", async () => {
+    const result = await parseImportAction({
+      source: "BB",
+      fileName: "extrato.csv",
+      content: "conteudo",
+      statementDate: null,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      message: "Informe a competencia da fatura ou extrato.",
     });
   });
 
@@ -52,7 +66,7 @@ describe("import actions", () => {
       fileName: "fatura.csv",
       content:
         "Data,Estabelecimento,Portador,Valor,Parcela\n01/06/2026,Loja,Pessoa,10,00,1/1",
-      statementDate: null,
+      statementDate: "2026-06-10",
     });
 
     expect(result).toMatchObject({

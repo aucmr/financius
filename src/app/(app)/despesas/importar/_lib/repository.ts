@@ -123,6 +123,30 @@ export async function findImportDuplicateCandidates(input: {
   });
 }
 
+export async function findImportedStatementBatches(
+  householdId: string,
+  start: Date,
+  end: Date,
+) {
+  const prisma = await getPrisma();
+  return prisma.importBatch.findMany({
+    where: {
+      householdId,
+      status: { in: ["COMPLETED", "PARTIAL"] },
+      importedRows: { gt: 0 },
+      OR: [
+        { statementDate: { gte: start, lt: end } },
+        {
+          source: "BB",
+          statementDate: null,
+          expenses: { some: { date: { gte: start, lt: end } } },
+        },
+      ],
+    },
+    select: { source: true },
+  });
+}
+
 export type PersistImportedExpense = {
   householdId: string;
   description: string;

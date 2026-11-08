@@ -48,6 +48,11 @@ const baseData: ExpensePageData = {
         members,
     },
     expenses: [],
+    importedStatements: {
+        XP: true,
+        BTG: false,
+        BB: false,
+    },
     totalAmount: "123.45",
     sharedAmount: "67.89",
 };
@@ -65,8 +70,14 @@ describe("ExpenseMonthPage", () => {
         expect(stats).toHaveClass("grid", "sm:grid-cols-3");
         expect(screen.getByText("Total do mês")).toBeInTheDocument();
         expect(screen.getByText("Compartilhadas")).toBeInTheDocument();
-        expect(stats).toHaveTextContent("Lançamentos");
+        expect(stats).not.toHaveTextContent("Lançamentos");
+        expect(stats).toHaveTextContent("Importações do mês");
+        expect(stats).toHaveTextContent("XP");
+        expect(stats).toHaveTextContent("Banco do Brasil");
+        expect(stats).toHaveTextContent("Importada");
+        expect(stats).toHaveTextContent("Não importada");
         expect(screen.getByTestId("month-navigation").closest('.grid.sm\\:grid-cols-3')).toBeNull();
+        expect(screen.getByText("0 itens")).toBeInTheDocument();
         expect(screen.getByRole("link", { name: "Nova despesa" })).toBeInTheDocument();
     });
 

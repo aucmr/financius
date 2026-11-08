@@ -71,10 +71,11 @@ describe("CSV import formats", () => {
       "docs/aux/BB - Extrato conta corrente - 072025.csv",
     );
     const decoded = decodeCsvBytes(bytes);
-    const parsed = parseImportCsv(decoded.text, "BB", null);
+    const parsed = parseImportCsv(decoded.text, "BB", "2025-07-01");
 
     expect(decoded.encoding).toBe("windows-1252");
     expect(detectCsvSource(decoded.text)).toBe("BB");
+    expect(parsed.statementDate).toBe("2025-07-01");
     expect(parsed.rows[0]).toMatchObject({
       description: "Auciomar Carlos Teixeira D",
       amount: "10792.25",
@@ -85,6 +86,12 @@ describe("CSV import formats", () => {
       expect.arrayContaining([
         expect.objectContaining({ reason: "bank_credit" }),
       ]),
+    );
+  });
+
+  it("requires a statement date for BB imports", () => {
+    expect(() => parseImportCsv("content", "BB", null)).toThrow(
+      "A statement date is required for all imports.",
     );
   });
 

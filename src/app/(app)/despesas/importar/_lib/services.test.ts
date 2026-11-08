@@ -4,6 +4,7 @@ import type { AuthContext } from "@/src/lib/auth/context";
 import type { ImportBatchInput } from "@/src/app/(app)/despesas/importar/_lib/schemas";
 import {
   createImport,
+  getImportDuplicateMatches,
   getImportSuggestions,
   type ImportRepository,
 } from "@/src/app/(app)/despesas/importar/_lib/services";
@@ -73,6 +74,21 @@ function createRepository() {
 }
 
 describe("import service", () => {
+  it("does not treat the BB statement competence as a purchase date for duplicates", async () => {
+    const repository = createRepository();
+
+    await getImportDuplicateMatches(
+      context,
+      createRow({ source: "BB" }),
+      "2026-06-30",
+      repository,
+    );
+
+    expect(repository.findImportDuplicateCandidates).toHaveBeenCalledWith(
+      expect.objectContaining({ statementDate: null }),
+    );
+  });
+
   it("imports reported XP amounts without floating-point cent errors", async () => {
     const repository = createRepository();
     const expectedRows = [
@@ -151,6 +167,29 @@ describe("import service", () => {
       installment: "2/3",
       authorizationCode: "ABC123",
       documentNumber: "5250",
+    });
+  });
+
+  it("stores the BB statement competence without changing transaction dates", async () => {
+    const repository = createRepository();
+
+    await createImport(
+      context,
+      createBatch({
+        source: "BB",
+        statementDate: "2026-06-30",
+        rows: [createRow({ source: "BB", transactionDate: "2026-06-15" })],
+      }),
+      repository,
+    );
+
+    const batch = repository.createImportBatch.mock.calls[0][0];
+    expect(batch.statementDate).toEqual(
+      new Date("2026-06-30T00:00:00.000Z"),
+    );
+    expect(batch.expenses[0]).toMatchObject({
+      date: new Date("2026-06-15T00:00:00.000Z"),
+      creditCardTransactionDate: null,
     });
   });
 

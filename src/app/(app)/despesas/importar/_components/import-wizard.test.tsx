@@ -146,6 +146,15 @@ beforeEach(() => {
 });
 
 describe("ImportWizard review navigation", () => {
+    it("requires the statement competence for Banco do Brasil", () => {
+        render(<ImportWizard householdName="Casa" options={options} />);
+        fireEvent.click(screen.getByRole("button", { name: /Banco do Brasil/ }));
+
+        const competenceInput = screen.getByLabelText("Competencia do extrato");
+        expect(competenceInput).toBeEnabled();
+        expect(competenceInput).toBeRequired();
+    });
+
     it("returns to the previous row, preserves edits, and submits each confirmed row once", async () => {
         await startReview();
         expect(screen.queryByRole("button", { name: "Despesa anterior" })).not.toBeInTheDocument();

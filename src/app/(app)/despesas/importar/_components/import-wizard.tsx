@@ -28,17 +28,12 @@ import { Spinner } from "@/src/components/ui/spinner";
 import {
   decodeCsvBytes,
   detectCsvSource,
+  importSourceLabels,
   type IgnoredImportRow,
   type ImportSource,
   type ParsedImportRow,
 } from "@/src/lib/imports";
 import { normalizeBtgXlsx } from "@/src/lib/imports/btg-xlsx";
-
-const sourceLabels: Record<ImportSource, string> = {
-  XP: "XP",
-  BTG: "BTG",
-  BB: "Banco do Brasil",
-};
 
 type ReviewRow = ParsedImportRow & {
   areaCategoryId: string;
@@ -361,12 +356,12 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
       setError("Informe a senha da fatura BTG.");
       return;
     }
-    if ((source === "XP" || source === "BTG") && !statementDate) {
-      setError("Informe a competencia da fatura.");
+    if (!statementDate) {
+      setError("Informe a competencia da fatura ou extrato.");
       return;
     }
     if (source !== "BTG" && detectedSource && detectedSource !== source) {
-      setError(`O arquivo parece ser da ${sourceLabels[detectedSource]}.`);
+      setError(`O arquivo parece ser da ${importSourceLabels[detectedSource]}.`);
       return;
     }
 
@@ -596,7 +591,7 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
                 </Field>
                 <Field>
                   <FieldTitle>Origem</FieldTitle>
-                  <div className="flex h-8 items-center rounded-lg border bg-muted/50 px-2.5 text-sm text-muted-foreground">{sourceLabels[currentRow.source]}</div>
+                  <div className="flex h-8 items-center rounded-lg border bg-muted/50 px-2.5 text-sm text-muted-foreground">{importSourceLabels[currentRow.source]}</div>
                 </Field>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -744,18 +739,18 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
         <CardContent>
           <FieldGroup>
             <div className="grid gap-3 sm:grid-cols-3">
-              {(Object.keys(sourceLabels) as ImportSource[]).map((item) => (
+              {(Object.keys(importSourceLabels) as ImportSource[]).map((item) => (
                 <Button key={item} type="button" variant={source === item ? "default" : "secondary"} className="h-14 justify-start gap-3" onClick={() => handleSourceChange(item)} disabled={isLoading}>
                   <LandmarkIcon aria-hidden="true" />
-                  <span className="text-left"><span className="block font-semibold">{sourceLabels[item]}</span><span className="block text-xs opacity-70">{item === "BB" ? "Extrato bancario" : "Fatura de cartao"}</span></span>
+                  <span className="text-left"><span className="block font-semibold">{importSourceLabels[item]}</span><span className="block text-xs opacity-70">{item === "BB" ? "Extrato bancario" : "Fatura de cartao"}</span></span>
                 </Button>
               ))}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor="import-statement-date">{source === "BB" ? "Data de referencia (opcional)" : "Competencia da fatura"}</FieldLabel>
-                <Input id="import-statement-date" type="date" value={statementDate} onChange={(event) => setStatementDate(event.target.value)} disabled={!source || source === "BB"} />
-                <FieldDescription>{source === "BB" ? "As datas serao lidas de cada lancamento." : "Essa data sera usada como competencia mensal."}</FieldDescription>
+                <FieldLabel htmlFor="import-statement-date">{source === "BB" ? "Competencia do extrato" : "Competencia da fatura"}</FieldLabel>
+                <Input id="import-statement-date" type="date" value={statementDate} onChange={(event) => setStatementDate(event.target.value)} disabled={!source} required={Boolean(source)} />
+                <FieldDescription>{source === "BB" ? "A competencia identifica o extrato; cada despesa mantem a data real da transacao." : "Essa data sera usada como competencia mensal."}</FieldDescription>
               </Field>
               <Field>
                 <FieldLabel htmlFor="import-responsible">Responsavel deste arquivo</FieldLabel>
@@ -776,7 +771,7 @@ export function ImportWizard({ householdName, options }: ImportWizardProps) {
                 onChange={handleFileChange}
                 disabled={!source || isLoading}
               />
-              {fileName && <FieldDescription>{fileName} carregado{detectedSource ? ` · formato detectado: ${sourceLabels[detectedSource]}` : ""}</FieldDescription>}
+              {fileName && <FieldDescription>{fileName} carregado{detectedSource ? ` · formato detectado: ${importSourceLabels[detectedSource]}` : ""}</FieldDescription>}
             </Field>
             {source === "BTG" && (
               <Field>

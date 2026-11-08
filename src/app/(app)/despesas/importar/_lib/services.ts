@@ -115,7 +115,8 @@ async function getDuplicateMatches(
 ) {
   const amount = normalizeSignedAmount(row.amount);
   const transactionDate = parseDateOnly(row.transactionDate);
-  const parsedStatementDate = statementDate
+  const isCardImport = row.source === "XP" || row.source === "BTG";
+  const parsedStatementDate = isCardImport && statementDate
     ? parseDateOnly(statementDate)
     : null;
   const fingerprint = await createImportRowFingerprint(toParsedRow(row));
