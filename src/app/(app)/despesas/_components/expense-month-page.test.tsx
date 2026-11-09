@@ -26,9 +26,25 @@ vi.mock("@/src/app/(app)/despesas/_components/expense-table", () => ({
     ExpenseTable: () => <div data-testid="expense-table" />,
 }));
 
+vi.mock("@/src/app/(app)/despesas/_components/expense-distribution-charts", () => ({
+    ExpenseDistributionCharts: ({
+        areas,
+        profiles,
+    }: {
+        areas: ExpensePageData["expenseDistribution"]["byArea"];
+        profiles: ExpensePageData["expenseDistribution"]["byProfile"];
+    }) => (
+        <div
+            data-testid="expense-distribution-charts"
+            data-area-count={areas.length.toString()}
+            data-profile-count={profiles.length.toString()}
+        />
+    ),
+}));
+
 vi.mock("@/src/app/(app)/despesas/_components/month-navigation", () => ({
-    MonthNavigation: ({ month }: { month: string }) => (
-        <div data-testid="month-navigation">{month}</div>
+    MonthNavigation: ({ month, showMonthPicker }: { month: string; showMonthPicker?: boolean }) => (
+        <div data-testid="month-navigation" data-show-month-picker={showMonthPicker}>{month}</div>
     ),
 }));
 
@@ -48,6 +64,10 @@ const baseData: ExpensePageData = {
         members,
     },
     expenses: [],
+    expenseDistribution: {
+        byArea: [],
+        byProfile: [],
+    },
     importedStatements: {
         XP: true,
         BTG: false,
@@ -78,7 +98,34 @@ describe("ExpenseMonthPage", () => {
         expect(stats).toHaveTextContent("Não importada");
         expect(screen.getByTestId("month-navigation").closest('.grid.sm\\:grid-cols-3')).toBeNull();
         expect(screen.getByText("0 itens")).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: "Nova despesa" })).toBeInTheDocument();
+        expect(screen.getByTestId("month-navigation")).toHaveAttribute("data-show-month-picker", "true");
+        expect(screen.queryByText("Despesas", { exact: true })).not.toBeInTheDocument();
+
+        const importLink = screen.getByRole("link", { name: "Importar arquivo" });
+        const newExpenseLink = screen.getByRole("link", { name: "Nova despesa" });
+        const actions = screen.getByRole("group", { name: "Ações de despesas" });
+
+        expect(actions).toContainElement(importLink);
+        expect(actions).toContainElement(newExpenseLink);
+        expect(importLink.className).toBe(newExpenseLink.className);
+    });
+
+    it("places the selected-month distribution charts before the expense list", () => {
+        render(<ExpenseMonthPage data={baseData} />);
+
+        const chartSection = screen.getByRole("region", {
+            name: "Composição das despesas",
+        });
+        const charts = screen.getByTestId("expense-distribution-charts");
+        const expenseTable = screen.getByTestId("expense-table");
+
+        expect(chartSection).toContainElement(charts);
+        expect(charts).toHaveAttribute("data-area-count", "0");
+        expect(charts).toHaveAttribute("data-profile-count", "0");
+        expect(
+            chartSection.compareDocumentPosition(expenseTable) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
     });
 
     it("shows the household callout when a second member is missing", () => {

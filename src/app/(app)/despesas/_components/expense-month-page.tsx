@@ -2,24 +2,20 @@ import { FileUpIcon, PlusIcon, ReceiptTextIcon, ScaleIcon, type LucideIcon } fro
 import Link from "next/link";
 
 import { HouseholdMemberForm } from "@/src/app/(app)/despesas/_components/household-member-form";
+import { ExpenseDistributionCharts } from "@/src/app/(app)/despesas/_components/expense-distribution-charts";
 import { ExpenseTable } from "@/src/app/(app)/despesas/_components/expense-table";
 import { MonthNavigation } from "@/src/app/(app)/despesas/_components/month-navigation";
 import type { ExpensePageData } from "@/src/app/(app)/despesas/_lib/types";
 import { Badge } from "@/src/components/ui/badge";
 import { buttonVariants } from "@/src/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { cn } from "@/src/lib/utils/cn";
 import { importSourceLabels, importSources } from "@/src/lib/imports";
+import { formatCurrency } from "@/src/lib/utils/currency";
 
 type ExpenseMonthPageProps = {
     data: ExpensePageData;
 };
-
-function formatCurrency(value: string) {
-    return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-    }).format(Number(value));
-}
 
 function SummaryStat({ icon: Icon, title, value, description }: { icon: LucideIcon; title: string; value: string | number; description: string }) {
     return (
@@ -70,32 +66,54 @@ export function ExpenseMonthPage({ data }: ExpenseMonthPageProps) {
 
     return (
         <section className="mx-auto w-full max-w-7xl flex flex-col gap-8">
-            <header className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-                <div className="flex flex-col items-start gap-2">
-                    <Badge variant="secondary">Despesas</Badge>
+            <div className="flex flex-col gap-5">
+                <header className="flex flex-col items-start gap-2">
                     <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Despesas do casal</h1>
                     <p className="max-w-2xl text-base text-muted-foreground">
                         Acompanhe os lançamentos de {data.householdName} agrupados por área e subcategoria.
                     </p>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <MonthNavigation month={data.month} />
-                    <Link href="/despesas/importar" className={buttonVariants({ variant: "secondary" })}>
+                </header>
+                <div className="flex flex-col gap-4 border-y py-4 md:flex-row md:items-end md:justify-between">
+                    <MonthNavigation month={data.month} showMonthPicker />
+                    <div role="group" aria-label="Ações de despesas" className="flex flex-col gap-2 sm:flex-row">
+                        <Link
+                            href="/despesas/importar"
+                            className={cn(buttonVariants({ variant: "secondary" }), "w-full justify-center sm:w-auto")}
+                        >
                         <FileUpIcon data-icon="inline-start" aria-hidden="true" />
                         Importar arquivo
-                    </Link>
-                    <Link href="/despesas/nova" className={buttonVariants()}>
+                        </Link>
+                        <Link
+                            href="/despesas/nova"
+                            className={cn(buttonVariants({ variant: "secondary" }), "w-full justify-center sm:w-auto")}
+                        >
                         <PlusIcon data-icon="inline-start" aria-hidden="true" />
                         Nova despesa
-                    </Link>
+                        </Link>
+                    </div>
                 </div>
-            </header>
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
                 <SummaryStat icon={ReceiptTextIcon} title="Total do mês" value={formatCurrency(data.totalAmount)} description="Todos os lançamentos" />
                 <SummaryStat icon={ScaleIcon} title="Compartilhadas" value={formatCurrency(data.sharedAmount)} description="Base para a divisão futura" />
                 <ImportedStatementsSummary importedStatements={data.importedStatements} />
             </div>
+
+            <section aria-labelledby="expense-distribution-heading" className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                    <h2 id="expense-distribution-heading" className="text-xl font-semibold tracking-tight">
+                        Composição das despesas
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                        Distribuição por área e perfil na competência selecionada.
+                    </p>
+                </div>
+                <ExpenseDistributionCharts
+                    areas={data.expenseDistribution.byArea}
+                    profiles={data.expenseDistribution.byProfile}
+                />
+            </section>
 
             {canAssociateMember && (
                 <Card className="border border-dashed border-primary/40 bg-primary/5 ring-0" data-testid="household-callout">

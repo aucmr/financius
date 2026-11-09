@@ -74,6 +74,13 @@ export type ExpenseListItem = {
   };
 };
 
+export type ExpenseCategoryTotal = {
+  id: string;
+  name: string;
+  color: string;
+  amount: number;
+};
+
 export type ExpensePageData = {
   month: string;
   householdName: string;
@@ -81,6 +88,10 @@ export type ExpensePageData = {
   members: ExpenseMemberOption[];
   options: ExpenseOptions;
   expenses: ExpenseListItem[];
+  expenseDistribution: {
+    byArea: ExpenseCategoryTotal[];
+    byProfile: ExpenseCategoryTotal[];
+  };
   importedStatements: Record<ImportSource, boolean>;
   totalAmount: string;
   sharedAmount: string;

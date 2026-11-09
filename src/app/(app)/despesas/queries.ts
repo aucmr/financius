@@ -12,7 +12,11 @@ import {
 } from "@/src/app/(app)/despesas/_lib/services";
 import { findImportedStatementBatches } from "@/src/app/(app)/despesas/importar/_lib/repository";
 import type { ExpenseFormValues } from "@/src/app/(app)/despesas/_lib/schemas";
-import type { ExpenseOptions } from "@/src/app/(app)/despesas/_lib/types";
+import type {
+  ExpenseCategoryTotal,
+  ExpenseListItem,
+  ExpenseOptions,
+} from "@/src/app/(app)/despesas/_lib/types";
 
 function mapOptions(
   options: Awaited<ReturnType<typeof findExpenseOptions>>,
@@ -40,6 +44,41 @@ function mapOptions(
   };
 }
 
+function summarizeExpensesByCategory(
+  expenses: ExpenseListItem[],
+  getCategory: (
+    expense: ExpenseListItem,
+  ) => Pick<ExpenseCategoryTotal, "id" | "name" | "color">,
+): ExpenseCategoryTotal[] {
+  const totals = new Map<
+    string,
+    Pick<ExpenseCategoryTotal, "id" | "name" | "color"> & {
+      amountInCents: number;
+    }
+  >();
+
+  for (const expense of expenses) {
+    const category = getCategory(expense);
+    const amountInCents = Math.round(Number(expense.amount) * 100);
+    const existing = totals.get(category.id);
+
+    if (existing) {
+      existing.amountInCents += amountInCents;
+    } else {
+      totals.set(category.id, { ...category, amountInCents });
+    }
+  }
+
+  return Array.from(totals.values(), ({ amountInCents, ...category }) => ({
+    ...category,
+    amount: amountInCents / 100,
+  })).sort(
+    (first, second) =>
+      second.amount - first.amount ||
+      first.name.localeCompare(second.name, "pt-BR"),
+  );
+}
+
 export async function getExpensePageData(requestedMonth: unknown) {
   const context = await getAuthContext();
   const month = normalizeMonth(requestedMonth);
@@ -57,6 +96,16 @@ export async function getExpensePageData(requestedMonth: unknown) {
     members: options.members,
     options: mapOptions(options),
     expenses: expenses.expenses,
+    expenseDistribution: {
+      byArea: summarizeExpensesByCategory(
+        expenses.expenses,
+        ({ areaCategory }) => areaCategory,
+      ),
+      byProfile: summarizeExpensesByCategory(
+        expenses.expenses,
+        ({ profileCategory }) => profileCategory,
+      ),
+    },
     importedStatements: {
       XP: importedBatches.some(({ source }) => source === "XP"),
       BTG: importedBatches.some(({ source }) => source === "BTG"),
