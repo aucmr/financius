@@ -82,7 +82,7 @@ function ExpenseDistributionCard({
             </EmptyHeader>
           </Empty>
         ) : (
-          <div className="grid flex-1 items-center gap-4 xl:grid-cols-2">
+          <div className="grid items-start gap-4 xl:flex-1 xl:grid-cols-2 xl:items-center">
             <ChartContainer
               config={chartConfig}
               className="mx-auto h-[220px] w-full max-w-[220px]"
